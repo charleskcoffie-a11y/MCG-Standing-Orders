@@ -1,9 +1,41 @@
 
-import { Profile, UserStatus } from '../types';
+import { Profile, UserStatus, Section, Hymn, Favorite } from '../types';
 import { ADMIN_PASSCODE } from '../constants';
 
+const SUPABASE_URL = 'https://wapaycqvzjthsplfjawz.supabase.co'; 
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndhcGF5Y3F2emp0aHNwbGZqYXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyNjAwNTQsImV4cCI6MjA4MzgzNjA1NH0.8LvqQB3fElq8RQjX24zKMqYJQxskxiJLc3iHgsHPEME';
+
+async function sbFetch(path: string, options: RequestInit = {}) {
+  const url = `${SUPABASE_URL}/rest/v1/${path}`;
+  const headers: Record<string, string> = {
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation',
+    ...(options.headers as Record<string, string>)
+  };
+
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage = `Database error (${response.status}): ${response.statusText}`;
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.message || errorMessage;
+      console.error("Supabase Detailed Error:", errorJson);
+    } catch (e) {
+      console.error("Supabase Raw Error:", errorText);
+    }
+    throw new Error(errorMessage);
+  }
+  return response.json();
+}
+
 export const SupabaseService = {
-  // Mocking the backend for the interactive preview
   _profiles: [] as Profile[],
   _currentUser: null as Profile | null,
 
@@ -11,7 +43,7 @@ export const SupabaseService = {
     const adminExists = this._profiles.some(p => p.username.toLowerCase() === 'admin');
     if (!adminExists) {
       const adminProfile: Profile = {
-        id: 'admin-fixed-id',
+        id: 'admin-001',
         email: 'admin@methodist.org.uk',
         username: 'admin',
         full_name: 'Conference Admin',
@@ -27,22 +59,9 @@ export const SupabaseService = {
 
   async signUp(email: string, username: string, fullName: string, church: string, password?: string): Promise<Profile> {
     this.loadFromLocal();
-    
-    const emailLower = email.toLowerCase();
-    const userLower = username.toLowerCase();
-
-    // Check if email or username already exists
-    if (this._profiles.some(p => p.email.toLowerCase() === emailLower)) {
-      throw new Error("Email already registered. Please sign in.");
-    }
-    if (this._profiles.some(p => p.username.toLowerCase() === userLower)) {
-      throw new Error("Username already taken. Please choose another.");
-    }
-
     const isAdmin = password === ADMIN_PASSCODE;
-    
     const newProfile: Profile = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: `user-${Math.random().toString(36).substr(2, 9)}`,
       email,
       username,
       full_name: fullName,
@@ -51,7 +70,6 @@ export const SupabaseService = {
       status: isAdmin ? 'approved' : 'pending',
       created_at: Date.now()
     };
-    
     this._profiles.push(newProfile);
     this._currentUser = newProfile;
     this.saveToLocal();
@@ -61,39 +79,18 @@ export const SupabaseService = {
   async signIn(identifier: string, password?: string): Promise<Profile | null> {
     this.loadFromLocal();
     const idLower = identifier.toLowerCase();
-    
-    // Special case: If user enters 'admin' and the admin passcode, ensure they get in
     if (idLower === 'admin' && password === ADMIN_PASSCODE) {
-      let admin = this._profiles.find(p => p.username.toLowerCase() === 'admin');
-      if (!admin) {
-        this._seedAdmin();
-        admin = this._profiles.find(p => p.username.toLowerCase() === 'admin');
-      }
-      this._currentUser = admin || null;
-      this.saveToLocal();
-      return this._currentUser;
+      this._seedAdmin();
+      this._currentUser = this._profiles.find(p => p.username === 'admin') || null;
+    } else {
+      const user = this._profiles.find(p => p.email.toLowerCase() === idLower || p.username.toLowerCase() === idLower);
+      if (user) this._currentUser = user;
     }
-
-    // Standard lookup
-    const user = this._profiles.find(p => 
-      p.email.toLowerCase() === idLower || 
-      p.username.toLowerCase() === idLower
-    );
-    
-    if (user) {
-      // If the found user is an admin, they MUST use the passcode
-      if (user.role === 'admin' && password !== ADMIN_PASSCODE) {
-        throw new Error("Invalid admin passcode.");
-      }
-      
-      this._currentUser = user;
-      this.saveToLocal();
-      return user;
-    }
-    return null;
+    this.saveToLocal();
+    return this._currentUser;
   },
 
-  async signOut() {
+  signOut() {
     this._currentUser = null;
     localStorage.removeItem('mock_current_user');
   },
@@ -103,26 +100,86 @@ export const SupabaseService = {
     return this._currentUser;
   },
 
-  async getPendingProfiles(): Promise<Profile[]> {
-    this.loadFromLocal();
-    return this._profiles.filter(p => p.status === 'pending');
+  async getSections(): Promise<Section[]> {
+    const data = await sbFetch('sections?select=*&order=order_index.asc');
+    return data.map((s: any) => ({
+      id: s.id,
+      title: s.title,
+      content: s.content,
+      category: s.category,
+      orderIndex: s.order_index
+    }));
   },
 
-  async updateStatus(userId: string, status: UserStatus) {
-    const idx = this._profiles.findIndex(p => p.id === userId);
-    if (idx !== -1) {
-      this._profiles[idx].status = status;
-      this.saveToLocal();
+  async uploadSections(sections: Section[]) {
+    const payload = sections.map(s => ({
+      title: s.title,
+      content: s.content,
+      category: s.category,
+      order_index: s.orderIndex
+    }));
+    
+    return await sbFetch('sections', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  async getHymns(): Promise<Hymn[]> {
+    return await sbFetch('hymns?select=*&order=number.asc');
+  },
+
+  async uploadHymns(hymns: any[]) {
+    const payload = hymns.map(h => ({
+      collection: h.collection,
+      code: h.code,
+      number: h.number,
+      title: h.title,
+      author: h.author,
+      lyrics: h.lyrics,
+      tags: h.tags
+    }));
+    return await sbFetch('hymns', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  async getFavorites(userId: string): Promise<Favorite[]> {
+    try {
+      const data = await sbFetch(`favorites?user_id=eq.${userId}&select=*`);
+      return data.map((f: any) => ({ 
+        sectionId: f.section_id, 
+        hymnId: f.hymn_id,
+        itemType: f.item_type,
+        createdAt: new Date(f.created_at).getTime() 
+      }));
+    } catch (e) {
+      return [];
     }
   },
 
-  subscribeToStatus(userId: string, callback: (status: UserStatus) => void) {
-    const interval = setInterval(() => {
-      this.loadFromLocal();
-      const user = this._profiles.find(p => p.id === userId);
-      if (user) callback(user.status);
-    }, 2000);
-    return () => clearInterval(interval);
+  async addFavorite(userId: string, targetId: string | number, type: 'section' | 'hymn') {
+    const body: any = { user_id: userId, item_type: type };
+    if (type === 'section') body.section_id = targetId;
+    else body.hymn_id = targetId;
+    
+    return await sbFetch('favorites', {
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+  },
+
+  async removeFavorite(userId: string, targetId: string | number, type: 'section' | 'hymn') {
+    const col = type === 'section' ? 'section_id' : 'hymn_id';
+    const url = `${SUPABASE_URL}/rest/v1/favorites?user_id=eq.${userId}&${col}=eq.${targetId}`;
+    await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      }
+    });
   },
 
   saveToLocal() {
@@ -132,12 +189,31 @@ export const SupabaseService = {
 
   loadFromLocal() {
     const p = localStorage.getItem('mock_profiles');
-    if (p) {
-      this._profiles = JSON.parse(p);
-    } else {
-      this._seedAdmin();
-    }
+    this._profiles = p ? JSON.parse(p) : [];
     const u = localStorage.getItem('mock_current_user');
     if (u) this._currentUser = JSON.parse(u);
+  },
+
+  async updateStatus(userId: string, status: UserStatus) {
+    this.loadFromLocal();
+    const idx = this._profiles.findIndex(p => p.id === userId);
+    if (idx !== -1) {
+      this._profiles[idx].status = status;
+      this.saveToLocal();
+    }
+  },
+
+  async getPendingProfiles(): Promise<Profile[]> {
+    this.loadFromLocal();
+    return this._profiles.filter(p => p.status === 'pending');
+  },
+
+  subscribeToStatus(userId: string, callback: (status: UserStatus) => void) {
+    const interval = setInterval(() => {
+      this.loadFromLocal();
+      const user = this._profiles.find(p => p.id === userId);
+      if (user) callback(user.status);
+    }, 2000);
+    return () => clearInterval(interval);
   }
 };

@@ -14,6 +14,12 @@ export interface Profile {
   created_at: number;
 }
 
+export interface UserSettings {
+  preferredFont: 'serif' | 'sans';
+  defaultFontSize: 'sm' | 'base' | 'lg' | 'xl';
+  autoSync: boolean;
+}
+
 export interface Section {
   id: string;
   title: string;
@@ -23,8 +29,28 @@ export interface Section {
   parentTitle?: string;
 }
 
+export interface Hymn {
+  id: number;
+  collection: string;
+  code: string;
+  number: number;
+  raw_title: string;
+  title: string;
+  author?: string;
+  tags?: string;
+  reference_number?: string;
+  lyrics: string;
+}
+
 export interface Favorite {
-  sectionId: string;
+  sectionId?: string;
+  hymnId?: number;
+  itemType?: 'section' | 'hymn';
+  createdAt: number;
+}
+
+export interface FavoriteHymn {
+  hymnId: number;
   createdAt: number;
 }
 
@@ -38,6 +64,7 @@ export interface Bookmark {
 
 export enum AppTab {
   Search = 'search',
+  Hymnal = 'hymnal',
   Favorites = 'favorites',
   Bookmarks = 'bookmarks',
   Settings = 'settings',

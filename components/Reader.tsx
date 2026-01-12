@@ -1,37 +1,28 @@
 
 import React, { useState, useEffect } from 'react';
-import { Section } from '../types';
-import { ArrowLeft, Heart, Bookmark as BookmarkIcon, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
+import { Section, UserSettings } from '../types';
+import { ArrowLeft, Heart, Bookmark as BookmarkIcon, ChevronLeft, ChevronRight, Type } from 'lucide-react';
 import { StorageService } from '../services/storage';
 
 interface ReaderProps {
   section: Section;
   searchQuery: string;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
   onBack: () => void;
   onNext?: () => void;
   onPrev?: () => void;
 }
 
-export const Reader: React.FC<ReaderProps> = ({ section, searchQuery, onBack, onNext, onPrev }) => {
-  const [isFav, setIsFav] = useState(false);
+export const Reader: React.FC<ReaderProps> = ({ section, searchQuery, isFavorite, onToggleFavorite, onBack, onNext, onPrev }) => {
   const [showToast, setShowToast] = useState<string | null>(null);
+  const [settings, setSettings] = useState<UserSettings>(StorageService.getSettings());
 
   useEffect(() => {
-    setIsFav(StorageService.isFavorite(section.id));
     // Scroll to top when section changes
     const main = document.getElementById('reader-content');
     if (main) main.scrollTop = 0;
   }, [section.id]);
-
-  const toggleFavorite = () => {
-    if (isFav) {
-      StorageService.removeFavorite(section.id);
-      setIsFav(false);
-    } else {
-      StorageService.saveFavorite({ sectionId: section.id, createdAt: Date.now() });
-      setIsFav(true);
-    }
-  };
 
   const addBookmark = () => {
     StorageService.saveBookmark({
@@ -42,6 +33,12 @@ export const Reader: React.FC<ReaderProps> = ({ section, searchQuery, onBack, on
       createdAt: Date.now()
     });
     triggerToast('Progress Bookmarked');
+  };
+
+  const toggleFont = () => {
+    const newSettings = { ...settings, preferredFont: settings.preferredFont === 'serif' ? 'sans' : 'serif' as any };
+    setSettings(newSettings);
+    StorageService.saveSettings(newSettings);
   };
 
   const triggerToast = (msg: string) => {
@@ -67,6 +64,13 @@ export const Reader: React.FC<ReaderProps> = ({ section, searchQuery, onBack, on
     );
   };
 
+  const fontSizeClass = {
+    sm: 'text-base',
+    base: 'text-xl',
+    lg: 'text-2xl',
+    xl: 'text-3xl'
+  }[settings.defaultFontSize];
+
   return (
     <div className="fixed inset-0 bg-[#FBF9F6] z-50 flex flex-col animate-in fade-in slide-in-from-right duration-300">
       <header className="bg-white/80 backdrop-blur-xl border-b border-[#E5E1DA] p-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
@@ -79,20 +83,23 @@ export const Reader: React.FC<ReaderProps> = ({ section, searchQuery, onBack, on
           </span>
         </div>
         <div className="flex gap-2">
+          <button onClick={toggleFont} className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-2xl text-slate-600 active:scale-90 transition-all">
+            <Type className="w-5 h-5" />
+          </button>
           <button onClick={addBookmark} className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-2xl text-slate-600 active:scale-90 transition-all">
             <BookmarkIcon className="w-5 h-5" />
           </button>
-          <button onClick={toggleFavorite} className={`p-2.5 rounded-2xl active:scale-90 transition-all ${isFav ? 'bg-[#6B0000]/10 text-[#6B0000]' : 'bg-slate-50 text-slate-600'}`}>
-            <Heart className={`w-5 h-5 ${isFav ? 'fill-current' : ''}`} />
+          <button onClick={onToggleFavorite} className={`p-2.5 rounded-2xl active:scale-90 transition-all ${isFavorite ? 'bg-[#6B0000]/10 text-[#6B0000]' : 'bg-slate-50 text-slate-600'}`}>
+            <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
           </button>
         </div>
       </header>
 
       <main id="reader-content" className="flex-1 overflow-y-auto px-6 py-8 max-w-2xl mx-auto w-full pb-32">
-        <h1 className="serif text-3xl font-black text-slate-900 mb-10 leading-[1.2]">
+        <h1 className={`${settings.preferredFont === 'serif' ? 'serif' : ''} text-3xl font-black text-slate-900 mb-10 leading-[1.2]`}>
           {highlightText(section.title, searchQuery)}
         </h1>
-        <div className="serif text-xl text-slate-800 leading-[1.7] whitespace-pre-wrap font-medium">
+        <div className={`${settings.preferredFont === 'serif' ? 'serif' : ''} ${fontSizeClass} text-slate-800 leading-[1.7] whitespace-pre-wrap font-medium`}>
           {highlightText(section.content, searchQuery)}
         </div>
 
