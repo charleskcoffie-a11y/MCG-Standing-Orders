@@ -365,7 +365,7 @@ const App: React.FC = () => {
         {renderTabContent()}
       </div>
 
-      <nav className="bg-white/95 backdrop-blur-xl border-t border-[#E5E1DA] flex items-center justify-around h-20 safe-area-bottom px-2 z-40">
+      <nav className="bg-white/80 backdrop-blur-2xl border-t border-slate-100 flex items-center justify-around h-24 safe-area-bottom px-1 z-40 shadow-2xl shadow-black/5">
         <TabButton active={activeTab === AppTab.Search} onClick={() => setActiveTab(AppTab.Search)} icon={<Search />} label="Law" />
         <TabButton active={activeTab === AppTab.Hymnal} onClick={() => setActiveTab(AppTab.Hymnal)} icon={<Music />} label="Hymns" />
         <TabButton active={activeTab === AppTab.Favorites} onClick={() => setActiveTab(AppTab.Favorites)} icon={<Heart />} label="Favs" />
@@ -397,12 +397,28 @@ interface TabButtonProps {
 }
 
 const TabButton: React.FC<TabButtonProps> = ({ active, onClick, icon, label }) => (
-  <button onClick={onClick} className="flex flex-col items-center justify-center w-full h-full relative group">
-    <div className={`p-1.5 rounded-xl transition-all duration-300 ${active ? 'bg-[#6B0000]/10 text-[#6B0000]' : 'text-slate-400 group-hover:text-slate-600'}`}>
-      {React.cloneElement(icon as React.ReactElement<any>, { className: 'w-6 h-6 mb-0.5' })}
+  <button 
+    onClick={onClick} 
+    className="flex flex-col items-center justify-center w-full h-full relative group transition-all duration-300 ease-out"
+  >
+    <div className={`relative p-2 rounded-2xl transition-all duration-300 ${
+      active 
+        ? 'bg-gradient-to-br from-[#8B0000]/15 to-[#6B0000]/10 text-[#6B0000] shadow-lg shadow-[#6B0000]/10 scale-110' 
+        : 'text-slate-500 group-hover:text-slate-700 group-hover:bg-slate-100/50'
+    }`}>
+      {React.cloneElement(icon as React.ReactElement<any>, { className: 'w-5 h-5 transition-all duration-300' })}
+      {active && (
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#6B0000]/5 to-transparent animate-pulse" />
+      )}
     </div>
-    <span className={`text-[9px] font-bold uppercase tracking-widest ${active ? 'text-[#6B0000]' : 'text-slate-400'}`}>{label}</span>
-    {active && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#6B0000] rounded-b-full shadow-[0_0_10px_#6B0000]" />}
+    <span className={`text-[8px] font-bold uppercase tracking-widest mt-1 transition-all duration-300 ${
+      active 
+        ? 'text-[#6B0000] opacity-100' 
+        : 'text-slate-400 opacity-75 group-hover:opacity-100'
+    }`}>{label}</span>
+    {active && (
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-gradient-to-r from-[#6B0000] to-[#8B0000] rounded-full shadow-lg shadow-[#6B0000]/50 animate-pulse" />
+    )}
   </button>
 );
 
