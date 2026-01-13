@@ -34,6 +34,8 @@
       overflow: hidden;
       position: fixed;
       overscroll-behavior: none;
+      /* Support for safe areas on notched devices */
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
     body {
       font-family: 'Inter', sans-serif;
@@ -45,6 +47,11 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
+    }
+    
+    /* Content area padding for fixed bottom nav */
+    .content-with-nav {
+      padding-bottom: calc(5rem + env(safe-area-inset-bottom));
     }
     
     /* Dark mode styles */

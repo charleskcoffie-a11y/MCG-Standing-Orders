@@ -244,7 +244,7 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 pb-24">
         {hymns.length === 0 && (
           <div className="py-20 text-center">
             <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl shadow-lg flex items-center justify-center mx-auto mb-4">

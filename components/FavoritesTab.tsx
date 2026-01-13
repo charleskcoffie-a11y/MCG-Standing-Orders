@@ -143,9 +143,9 @@ export const FavoritesTab: React.FC<FavoritesTabProps> = ({ favorites, sections,
   }
 
   return (
-    <div className="h-full bg-[#FBF9F6] overflow-y-auto pb-20">
-      <div className="p-6 bg-white border-b border-[#E5E1DA] sticky top-0 z-10">
-        <h2 className="serif text-2xl font-bold text-slate-800 mb-4">Your Private Favorites</h2>
+    <div className="h-full bg-[#FBF9F6] dark:bg-slate-900 overflow-y-auto pb-24">
+      <div className="p-6 bg-white dark:bg-slate-800 border-b border-[#E5E1DA] dark:border-slate-700 sticky top-0 z-10">
+        <h2 className="serif text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4">Your Private Favorites</h2>
         <div className="flex gap-2">
           <button 
             onClick={() => setFilter('ALL')}

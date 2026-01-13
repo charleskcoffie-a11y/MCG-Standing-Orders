@@ -434,12 +434,12 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen w-full max-w-[430px] mx-auto bg-white dark:bg-slate-900 relative overflow-hidden shadow-2xl">
+    <div className="flex flex-col h-screen w-full max-w-[430px] mx-auto bg-white dark:bg-slate-900 relative shadow-2xl">
       <div className="flex-1 overflow-hidden relative">
         {renderTabContent()}
       </div>
 
-      <nav className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border-t border-[#E5E1DA] dark:border-slate-700 flex items-center justify-around h-20 safe-area-bottom px-2 z-40">
+      <nav className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border-t border-[#E5E1DA] dark:border-slate-700 flex items-center justify-around px-2 z-50 fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto" style={{height: 'calc(5rem + env(safe-area-inset-bottom))', paddingBottom: 'env(safe-area-inset-bottom)'}}>
         <TabButton active={activeTab === AppTab.Search} onClick={() => { setActiveTab(AppTab.Search); if (userSettings.hapticFeedback) haptic.light(); }} icon={<Search />} label="Law" />
         <TabButton active={activeTab === AppTab.Hymnal} onClick={() => { setActiveTab(AppTab.Hymnal); if (userSettings.hapticFeedback) haptic.light(); }} icon={<Music />} label="Hymns" />
         <TabButton active={activeTab === AppTab.Favorites} onClick={() => { setActiveTab(AppTab.Favorites); if (userSettings.hapticFeedback) haptic.light(); }} icon={<Heart />} label="Favs" />

@@ -183,7 +183,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({ sections, onSelectSection 
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 pb-24">
         {!query && !showHistory && popularSections.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3 px-1">
