@@ -39,27 +39,27 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthenticated, onGuestLogi
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#FBF9F6] p-8 justify-center min-h-screen">
-      <div className="mb-10 text-center">
-        <div className="w-20 h-20 bg-white rounded-[2rem] shadow-2xl flex items-center justify-center mx-auto mb-6 transform -rotate-6 border-t border-slate-100">
-           <Landmark className="w-10 h-10 text-[#6B0000]" />
+    <div className="w-full h-screen max-w-md mx-auto bg-[#FBF9F6] flex flex-col justify-center p-6 safe-area-inset">
+      <div className="mb-8 text-center">
+        <div className="w-16 h-16 bg-white rounded-[1.5rem] shadow-lg flex items-center justify-center mx-auto mb-4 transform -rotate-6 border border-slate-100">
+           <Landmark className="w-8 h-8 text-[#6B0000]" />
         </div>
-        <h1 className="serif text-3xl font-black text-[#6B0000] mb-2">Methodist Law</h1>
-        <p className="text-slate-500 font-medium italic">Official Digital Reference</p>
+        <h1 className="serif text-2xl font-black text-[#6B0000] mb-1">Methodist Law</h1>
+        <p className="text-slate-500 text-sm font-medium italic">Digital Reference</p>
       </div>
 
-      <div className="bg-white rounded-[2rem] p-8 shadow-xl border border-[#E5E1DA]">
-        <h2 className="serif text-xl font-bold mb-6 text-slate-800">
+      <div className="bg-white rounded-2xl p-6 shadow-lg border border-[#E5E1DA] mb-6">
+        <h2 className="serif text-lg font-bold mb-5 text-slate-800">
           {isLogin ? 'Sign In' : 'Register Account'}
         </h2>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           {isLogin ? (
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input
                 required
-                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-[#6B0000]/20 focus:border-[#6B0000] transition-all outline-none"
+                className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:ring-2 focus:ring-[#6B0000]/20 focus:border-[#6B0000] transition-all outline-none"
                 placeholder="Username or Email"
                 value={identifier}
                 onChange={e => setIdentifier(e.target.value)}
@@ -150,8 +150,8 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthenticated, onGuestLogi
         )}
       </div>
 
-      <div className="mt-12 text-center text-slate-400 text-[10px] uppercase tracking-widest font-bold">
-        <p>Managed by Methodist Church Information Technology</p>
+      <div className="mt-8 text-center text-slate-400 text-[9px] uppercase tracking-wider font-bold">
+        <p>Methodist Church Reference</p>
       </div>
     </div>
   );
