@@ -37,14 +37,16 @@ export interface Section {
 export interface Hymn {
   id: number;
   collection: string;
-  code: string;
+  code?: string;
   number: number;
-  raw_title: string;
+  raw_title?: string;
   title: string;
   author?: string;
+  copyright?: string;
   tags?: string;
   reference_number?: string;
   lyrics: string;
+  is_favorite?: boolean;
 }
 
 export interface Favorite {
@@ -84,7 +86,7 @@ export interface SearchResult {
 
 export interface ReadingHistory {
   id: string;
-  itemId: string | number;
+  itemId: string;
   itemType: 'section' | 'hymn';
   title: string;
   lastReadAt: number;
@@ -105,7 +107,7 @@ export interface ReadingProgress {
 
 export interface Note {
   id: string;
-  itemId: string | number;
+  itemId: string;
   itemType: 'section' | 'hymn';
   content: string;
   createdAt: number;

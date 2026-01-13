@@ -2,8 +2,8 @@
 import { Profile, UserStatus, Section, Hymn, Favorite } from '../types';
 import { ADMIN_PASSCODE } from '../constants';
 
-const SUPABASE_URL = 'https://wapaycqvzjthsplfjawz.supabase.co'; 
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndhcGF5Y3F2emp0aHNwbGZqYXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyNjAwNTQsImV4cCI6MjA4MzgzNjA1NH0.8LvqQB3fElq8RQjX24zKMqYJQxskxiJLc3iHgsHPEME';
+const SUPABASE_URL = 'https://wtvnyyfxjefuprcntjta.supabase.co'; 
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0dm55eWZ4amVmdXByY250anRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyMjY5NjUsImV4cCI6MjA4MDgwMjk2NX0.O569-gYigdB84xmjOTicMU2aSghDYm2ItPjl8EPmOm8';
 
 async function sbFetch(path: string, options: RequestInit = {}) {
   const url = `${SUPABASE_URL}/rest/v1/${path}`;
@@ -133,22 +133,29 @@ export const SupabaseService = {
   },
 
   async getHymns(): Promise<Hymn[]> {
-    return await sbFetch('hymns?select=*&order=number.asc');
+    return await sbFetch('songs?select=*&order=number.asc');
   },
 
   async uploadHymns(hymns: any[]) {
-    const payload = hymns.map(h => ({
-      collection: h.collection,
-      code: h.code,
-      number: h.number,
-      title: h.title,
-      author: h.author,
-      lyrics: h.lyrics,
-      tags: h.tags
-    }));
+    const payload = hymns.map((h, index) => {
+      const hymn: any = {
+        id: h.id || (index + 1), // Use provided ID or generate sequential ID
+        collection: h.collection || 'MHB',
+        number: h.number,
+        title: h.title,
+        lyrics: h.lyrics
+      };
+      if (h.code) hymn.code = h.code;
+      if (h.raw_title) hymn.raw_title = h.raw_title;
+      if (h.author) hymn.author = h.author;
+      if (h.copyright) hymn.copyright = h.copyright;
+      if (h.tags) hymn.tags = h.tags;
+      if (h.reference_number) hymn.reference_number = h.reference_number;
+      return hymn;
+    });
 
     // Use Upsert behavior to avoid 23505 error if record already exists
-    const result = await sbFetch('hymns', {
+    const result = await sbFetch('songs', {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates, return=representation' },
       body: JSON.stringify(payload)
@@ -178,26 +185,46 @@ export const SupabaseService = {
 
   async addFavorite(userId: string, targetId: string | number, type: 'section' | 'hymn') {
     const body: any = { user_id: userId, item_type: type };
-    if (type === 'section') body.section_id = targetId;
-    else body.hymn_id = targetId;
+    if (type === 'section') {
+      body.section_id = targetId;
+    } else {
+      body.hymn_id = targetId;
+    }
     
-    return await sbFetch('favorites', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates, return=representation' },
-      body: JSON.stringify(body)
-    });
+    console.log('Adding favorite:', body);
+    
+    try {
+      const result = await sbFetch('favorites', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates, return=representation' },
+        body: JSON.stringify(body)
+      });
+      console.log('Favorite added successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('Error adding favorite:', error);
+      throw error;
+    }
   },
 
   async removeFavorite(userId: string, targetId: string | number, type: 'section' | 'hymn') {
     const col = type === 'section' ? 'section_id' : 'hymn_id';
     const url = `${SUPABASE_URL}/rest/v1/favorites?user_id=eq.${userId}&${col}=eq.${targetId}`;
-    await fetch(url, {
+    console.log('Removing favorite:', { userId, targetId, type, url });
+    
+    const response = await fetch(url, {
       method: 'DELETE',
       headers: {
         'apikey': SUPABASE_ANON_KEY,
         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       }
     });
+    
+    if (!response.ok) {
+      console.error('Error removing favorite:', await response.text());
+    } else {
+      console.log('Favorite removed successfully');
+    }
   },
 
   saveToLocal() {
