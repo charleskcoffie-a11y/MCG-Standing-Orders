@@ -238,7 +238,7 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-600'
               }`}
             >
-              {type === 'ALL' ? 'All Hymns' : type === 'MHB' ? 'Methodist Hymn Book' : type === 'CAN' ? 'Canaan Hymns' : 'Canticles'}
+              {type === 'CANTICLE' ? 'Canticles' : type}
             </button>
           ))}
         </div>
