@@ -14,7 +14,7 @@ interface HymnalTabProps {
 }
 
 type CollectionType = 'ALL' | 'MHB' | 'CAN' | 'CANTICLE';
-type FontSize = 'sm' | 'base' | 'lg' | 'xl';
+type FontSize = 'sm' | 'base' | 'lg' | 'xl' | 'xxl';
 
 export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggleFavorite }) => {
   const [query, setQuery] = useState('');
@@ -28,29 +28,55 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
   const isHymnFav = (id: number) => favorites.some(f => f.hymnId === id);
 
   const cycleFontSize = () => {
-    const sizes: FontSize[] = ['sm', 'base', 'lg', 'xl'];
+    const sizes: FontSize[] = ['base', 'lg', 'xl', 'xxl'];
     const nextIndex = (sizes.indexOf(fontSize) + 1) % sizes.length;
     setFontSize(sizes[nextIndex]);
+    if (settings.hapticFeedback) haptic.light();
   };
 
   const formatLyrics = (text: string) => {
-    if (!settings.highlightVerses) return text;
+    // Split by double newlines to get verses
+    const verses = text.split(/\n\n+/);
     
-    // Improved regex to detect verse numbers at the start of paragraphs/lines
-    const verseRegex = /((?:^|\n)\d+[\.\)]\s*)/g;
-    const parts = text.split(verseRegex);
-    
-    return parts.map((part, i) => {
-      // If it looks like a verse number (digit + . or ) at start)
-      if (/^\s*\d+[\.\)]/.test(part)) {
-        return (
-          <span key={i} className="text-[#6B0000] font-black inline-block mr-1 mt-1">
-            {part.trim()}
-          </span>
-        );
-      }
-      return part;
-    });
+    return (
+      <div className="space-y-6">
+        {verses.map((verse, vIndex) => {
+          const lines = verse.trim().split('\n');
+          const firstLine = lines[0];
+          
+          // Check if first line is a verse number
+          const verseNumberMatch = firstLine.match(/^(\d+[\.\)])\s*(.*)/);
+          
+          if (verseNumberMatch) {
+            const [, number, restOfLine] = verseNumberMatch;
+            return (
+              <div key={vIndex} className="bg-white/30 dark:bg-slate-800/30 rounded-2xl p-4 backdrop-blur-sm">
+                <div className="flex items-start gap-3 mb-2">
+                  <span className="text-[#6B0000] dark:text-[#D4AF37] font-black text-2xl leading-none shrink-0 mt-1">
+                    {number}
+                  </span>
+                  <div className="flex-1 space-y-1">
+                    {restOfLine && <div className="leading-relaxed">{restOfLine}</div>}
+                    {lines.slice(1).map((line, lIndex) => (
+                      <div key={lIndex} className="leading-relaxed">{line}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          
+          // Verse without number
+          return (
+            <div key={vIndex} className="bg-white/30 dark:bg-slate-800/30 rounded-2xl p-4 backdrop-blur-sm space-y-1">
+              {lines.map((line, lIndex) => (
+                <div key={lIndex} className="leading-relaxed">{line}</div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   const filteredHymns = useMemo(() => {
@@ -82,9 +108,10 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
   if (selectedHymn) {
     const fontSizeClass = {
       sm: 'text-base',
-      base: 'text-lg',
-      lg: 'text-xl',
-      xl: 'text-2xl'
+      base: 'text-xl',
+      lg: 'text-2xl',
+      xl: 'text-3xl',
+      xxl: 'text-4xl'
     }[fontSize];
 
     const isFav = isHymnFav(selectedHymn.id);
@@ -154,16 +181,20 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
             </button>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto px-6 py-6 pb-20">
-          <div className="max-w-xl mx-auto">
-            <div className="mb-6 pb-3 border-b border-slate-100 dark:border-slate-700">
-              <h1 className="serif text-2xl font-black text-slate-900 dark:text-slate-100 mb-1 leading-tight">{selectedHymn.title}</h1>
-              <div className="flex items-center justify-between">
-                {selectedHymn.author && <p className="text-xs text-slate-400 font-medium italic">By {selectedHymn.author}</p>}
-                <span className="text-[9px] text-[#6B0000] dark:text-[#D4AF37] font-black uppercase tracking-tighter bg-[#6B0000]/5 dark:bg-[#D4AF37]/5 px-2 py-0.5 rounded">Ref: {selectedHymn.code}</span>
+        <main className="flex-1 overflow-y-auto px-5 py-6 pb-24">
+          <div className="max-w-2xl mx-auto">
+            <div className="mb-8 text-center">
+              <h1 className="serif text-3xl font-black text-slate-900 dark:text-slate-100 mb-2 leading-tight">{selectedHymn.title}</h1>
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-xs font-black text-[#6B0000] dark:text-[#D4AF37] uppercase tracking-wider bg-[#6B0000]/10 dark:bg-[#D4AF37]/10 px-3 py-1 rounded-full">
+                  {selectedHymn.collection} {selectedHymn.number}
+                </span>
+                {selectedHymn.author && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium italic">By {selectedHymn.author}</p>
+                )}
               </div>
             </div>
-            <div className={`serif ${fontSizeClass} text-slate-800 dark:text-slate-200 leading-[1.25] whitespace-pre-wrap font-normal`}>
+            <div className={`serif ${fontSizeClass} text-slate-900 dark:text-slate-100 leading-[1.7] font-normal`}>
               {formatLyrics(selectedHymn.lyrics)}
             </div>
           </div>

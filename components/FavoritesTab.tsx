@@ -15,7 +15,7 @@ interface FavoritesTabProps {
 export const FavoritesTab: React.FC<FavoritesTabProps> = ({ favorites, sections, hymns, onSelectSection, onToggleFavorite }) => {
   const [filter, setFilter] = useState<'ALL' | 'LAW' | 'HYMNS'>('ALL');
   const [selectedHymn, setSelectedHymn] = useState<Hymn | null>(null);
-  const [fontSize, setFontSize] = useState<'base' | 'lg' | 'xl'>('base');
+  const [fontSize, setFontSize] = useState<'base' | 'lg' | 'xl' | 'xxl'>('base');
   const settings = StorageService.getSettings();
 
   const favoriteSections = favorites
@@ -31,49 +31,97 @@ export const FavoritesTab: React.FC<FavoritesTabProps> = ({ favorites, sections,
   const hasAnyFavorites = favoriteSections.length > 0 || favoriteHymns.length > 0;
 
   const formatLyrics = (text: string) => {
-    if (!settings.highlightVerses) return text;
-
-    const verseRegex = /((?:^|\n)\d+[\.\)]\s*)/g;
-    const parts = text.split(verseRegex);
+    // Split by double newlines to get verses
+    const verses = text.split(/\n\n+/);
     
-    return parts.map((part, i) => {
-      if (/^\s*\d+[\.\)]/.test(part)) {
-        return (
-          <span key={i} className="text-[#6B0000] font-black inline-block mr-1 mt-1">
-            {part.trim()}
-          </span>
-        );
-      }
-      return part;
-    });
+    return (
+      <div className="space-y-6">
+        {verses.map((verse, vIndex) => {
+          const lines = verse.trim().split('\n');
+          const firstLine = lines[0];
+          
+          // Check if first line is a verse number
+          const verseNumberMatch = firstLine.match(/^(\d+[\.\)])\s*(.*)/);
+          
+          if (verseNumberMatch) {
+            const [, number, restOfLine] = verseNumberMatch;
+            return (
+              <div key={vIndex} className="bg-white/30 dark:bg-slate-800/30 rounded-2xl p-4 backdrop-blur-sm">
+                <div className="flex items-start gap-3 mb-2">
+                  <span className="text-[#6B0000] dark:text-[#D4AF37] font-black text-2xl leading-none shrink-0 mt-1">
+                    {number}
+                  </span>
+                  <div className="flex-1 space-y-1">
+                    {restOfLine && <div className="leading-relaxed">{restOfLine}</div>}
+                    {lines.slice(1).map((line, lIndex) => (
+                      <div key={lIndex} className="leading-relaxed">{line}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          
+          // Verse without number
+          return (
+            <div key={vIndex} className="bg-white/30 dark:bg-slate-800/30 rounded-2xl p-4 backdrop-blur-sm space-y-1">
+              {lines.map((line, lIndex) => (
+                <div key={lIndex} className="leading-relaxed">{line}</div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   if (selectedHymn) {
-    const fontSizeClass = { base: 'text-lg', lg: 'text-xl', xl: 'text-2xl' }[fontSize];
+    const fontSizeClass = { base: 'text-xl', lg: 'text-2xl', xl: 'text-3xl', xxl: 'text-4xl' }[fontSize];
+    
+    const cycleFontSize = () => {
+      const sizes: ('base' | 'lg' | 'xl' | 'xxl')[] = ['base', 'lg', 'xl', 'xxl'];
+      const nextIndex = (sizes.indexOf(fontSize) + 1) % sizes.length;
+      setFontSize(sizes[nextIndex]);
+    };
+    
     return (
-      <div className="fixed inset-0 bg-[#FBF9F6] z-[60] flex flex-col animate-in fade-in slide-in-from-right duration-300">
-        <header className="bg-white border-b border-[#E5E1DA] p-3 flex items-center gap-2 sticky top-0 z-10 shadow-sm">
-          <button onClick={() => setSelectedHymn(null)} className="p-2 bg-slate-50 rounded-xl text-slate-600 active:scale-95">
+      <div className="fixed inset-0 bg-[#FBF9F6] dark:bg-slate-900 z-[60] flex flex-col animate-in fade-in slide-in-from-right duration-300">
+        <header className="bg-white dark:bg-slate-800 border-b border-[#E5E1DA] dark:border-slate-700 p-3 flex items-center gap-2 sticky top-0 z-10 shadow-sm">
+          <button onClick={() => setSelectedHymn(null)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-600 dark:text-slate-200 active:scale-95">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex-1 min-w-0">
-            <p className="text-[9px] font-black text-[#6B0000] uppercase tracking-widest leading-none mb-0.5">{selectedHymn.collection} {selectedHymn.number}</p>
-            <h2 className="serif text-sm font-bold truncate text-slate-800 leading-tight">{selectedHymn.title}</h2>
+            <p className="text-[9px] font-black text-[#6B0000] dark:text-[#D4AF37] uppercase tracking-widest leading-none mb-0.5">{selectedHymn.collection} {selectedHymn.number}</p>
+            <h2 className="serif text-sm font-bold truncate text-slate-800 dark:text-slate-100 leading-tight">{selectedHymn.title}</h2>
           </div>
+          <button onClick={cycleFontSize} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-500 dark:text-slate-400 flex items-center gap-1">
+            <Type className="w-4 h-4" />
+            <span className="text-[10px] font-bold uppercase">{fontSize}</span>
+          </button>
           <button 
             onClick={() => {
               onToggleFavorite(selectedHymn.id, 'hymn');
               setSelectedHymn(null);
             }} 
-            className="p-2 bg-[#6B0000]/10 text-[#6B0000] rounded-xl"
+            className="p-2 bg-[#6B0000]/10 dark:bg-[#D4AF37]/10 text-[#6B0000] dark:text-[#D4AF37] rounded-xl"
           >
             <Heart className="w-5 h-5 fill-current" />
           </button>
         </header>
-        <main className="flex-1 overflow-y-auto px-6 py-6 pb-20">
-          <div className="max-w-xl mx-auto">
-            <h1 className="serif text-2xl font-black text-slate-900 mb-4 leading-tight">{selectedHymn.title}</h1>
-            <div className={`serif ${fontSizeClass} text-slate-800 leading-[1.25] whitespace-pre-wrap`}>
+        <main className="flex-1 overflow-y-auto px-5 py-6 pb-24">
+          <div className="max-w-2xl mx-auto">
+            <div className="mb-8 text-center">
+              <h1 className="serif text-3xl font-black text-slate-900 dark:text-slate-100 mb-2 leading-tight">{selectedHymn.title}</h1>
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-xs font-black text-[#6B0000] dark:text-[#D4AF37] uppercase tracking-wider bg-[#6B0000]/10 dark:bg-[#D4AF37]/10 px-3 py-1 rounded-full">
+                  {selectedHymn.collection} {selectedHymn.number}
+                </span>
+                {selectedHymn.author && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium italic">By {selectedHymn.author}</p>
+                )}
+              </div>
+            </div>
+            <div className={`serif ${fontSizeClass} text-slate-900 dark:text-slate-100 leading-[1.7] font-normal`}>
               {formatLyrics(selectedHymn.lyrics)}
             </div>
           </div>
