@@ -1,5 +1,5 @@
 
-import { Favorite, Bookmark, Section, Hymn, FavoriteHymn, UserSettings } from '../types';
+import { Favorite, Bookmark, Section, Hymn, FavoriteHymn, UserSettings, ReadingHistory, SearchHistory, ReadingProgress, Note } from '../types';
 
 const KEYS = {
   FAVORITES: 'mcso_favorites',
@@ -7,14 +7,22 @@ const KEYS = {
   BOOKMARKS: 'mcso_bookmarks',
   SECTIONS: 'mcso_sections_custom',
   HYMNS: 'mcso_hymns',
-  SETTINGS: 'mcso_user_settings'
+  SETTINGS: 'mcso_user_settings',
+  READING_HISTORY: 'mcso_reading_history',
+  SEARCH_HISTORY: 'mcso_search_history',
+  READING_PROGRESS: 'mcso_reading_progress',
+  NOTES: 'mcso_notes'
 };
 
 const DEFAULT_SETTINGS: UserSettings = {
   preferredFont: 'serif',
   defaultFontSize: 'base',
   autoSync: true,
-  highlightVerses: true
+  highlightVerses: true,
+  darkMode: false,
+  hapticFeedback: true,
+  voiceSearchEnabled: true,
+  ttsEnabled: true
 };
 
 export const StorageService = {
@@ -92,5 +100,91 @@ export const StorageService = {
 
   clearAll: () => {
     localStorage.clear();
+  },
+
+  // Reading History
+  getReadingHistory: (): ReadingHistory[] => {
+    const data = localStorage.getItem(KEYS.READING_HISTORY);
+    return data ? JSON.parse(data) : [];
+  },
+  addToReadingHistory: (itemId: string | number, itemType: 'section' | 'hymn', title: string) => {
+    const history = StorageService.getReadingHistory();
+    const existing = history.find(h => h.itemId === itemId && h.itemType === itemType);
+    
+    if (existing) {
+      existing.lastReadAt = Date.now();
+      existing.readCount++;
+    } else {
+      history.unshift({ id: Math.random().toString(36).substr(2, 9), itemId, itemType, title, lastReadAt: Date.now(), readCount: 1 });
+    }
+    
+    localStorage.setItem(KEYS.READING_HISTORY, JSON.stringify(history.slice(0, 50)));
+  },
+  clearReadingHistory: () => {
+    localStorage.removeItem(KEYS.READING_HISTORY);
+  },
+
+  // Search History
+  getSearchHistory: (): SearchHistory[] => {
+    const data = localStorage.getItem(KEYS.SEARCH_HISTORY);
+    return data ? JSON.parse(data) : [];
+  },
+  addSearchHistory: (query: string) => {
+    if (!query.trim()) return;
+    const history = StorageService.getSearchHistory();
+    const filtered = history.filter(h => h.query.toLowerCase() !== query.toLowerCase());
+    filtered.unshift({ query, timestamp: Date.now() });
+    localStorage.setItem(KEYS.SEARCH_HISTORY, JSON.stringify(filtered.slice(0, 20)));
+  },
+  clearSearchHistory: () => {
+    localStorage.removeItem(KEYS.SEARCH_HISTORY);
+  },
+
+  // Reading Progress
+  getReadingProgress: (sectionId: string): ReadingProgress | null => {
+    const data = localStorage.getItem(KEYS.READING_PROGRESS);
+    const all: ReadingProgress[] = data ? JSON.parse(data) : [];
+    return all.find(p => p.sectionId === sectionId) || null;
+  },
+  saveReadingProgress: (progress: ReadingProgress) => {
+    const data = localStorage.getItem(KEYS.READING_PROGRESS);
+    const all: ReadingProgress[] = data ? JSON.parse(data) : [];
+    const index = all.findIndex(p => p.sectionId === progress.sectionId);
+    
+    if (index >= 0) {
+      all[index] = progress;
+    } else {
+      all.push(progress);
+    }
+    
+    localStorage.setItem(KEYS.READING_PROGRESS, JSON.stringify(all));
+  },
+
+  // Notes
+  getNotes: (itemId?: string | number, itemType?: 'section' | 'hymn'): Note[] => {
+    const data = localStorage.getItem(KEYS.NOTES);
+    const all: Note[] = data ? JSON.parse(data) : [];
+    
+    if (itemId && itemType) {
+      return all.filter(n => n.itemId === itemId && n.itemType === itemType);
+    }
+    
+    return all;
+  },
+  saveNote: (note: Note) => {
+    const notes = StorageService.getNotes();
+    const index = notes.findIndex(n => n.id === note.id);
+    
+    if (index >= 0) {
+      notes[index] = note;
+    } else {
+      notes.push(note);
+    }
+    
+    localStorage.setItem(KEYS.NOTES, JSON.stringify(notes));
+  },
+  deleteNote: (id: string) => {
+    const notes = StorageService.getNotes();
+    localStorage.setItem(KEYS.NOTES, JSON.stringify(notes.filter(n => n.id !== id)));
   }
 };

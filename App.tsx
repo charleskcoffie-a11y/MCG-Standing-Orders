@@ -12,7 +12,8 @@ import { Reader } from './components/Reader';
 import { AuthView } from './components/AuthView';
 import { PendingView } from './components/PendingView';
 import { AdminView } from './components/AdminView';
-import { Search, Heart, Bookmark as BookmarkIcon, Settings, RefreshCw, FileText, Loader2, LogOut, ShieldAlert, AlertCircle, CheckCircle2, Music, Database, Type, Eye, Globe, Cloud, Landmark, Hash, UploadCloud, ChevronRight } from 'lucide-react';
+import { Search, Heart, Bookmark as BookmarkIcon, Settings, RefreshCw, FileText, Loader2, LogOut, ShieldAlert, AlertCircle, CheckCircle2, Music, Database, Type, Eye, Globe, Cloud, Landmark, Hash, UploadCloud, ChevronRight, Moon, Sun, Smartphone, Volume2, Mic } from 'lucide-react';
+import { applyDarkMode, haptic } from './services/utils';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.Search);
@@ -40,6 +41,11 @@ const App: React.FC = () => {
       }
       setIsInitialized(true);
       setBookmarks(StorageService.getBookmarks());
+      
+      // Apply dark mode on load
+      const settings = StorageService.getSettings();
+      applyDarkMode(settings.darkMode);
+      setUserSettings(settings);
     };
     init();
   }, []);
@@ -200,12 +206,12 @@ const App: React.FC = () => {
         );
       case AppTab.Settings:
         return (
-          <div className="h-full bg-[#FBF9F6] overflow-y-auto pb-20">
-             <div className="p-6 bg-white border-b border-[#E5E1DA] sticky top-0 z-10 flex items-center justify-between">
-               <h2 className="serif text-2xl font-bold text-slate-800">Menu</h2>
-               <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
+          <div className="h-full bg-[#FBF9F6] dark:bg-slate-900 overflow-y-auto pb-20">
+             <div className="p-6 bg-white dark:bg-slate-800 border-b border-[#E5E1DA] dark:border-slate-700 sticky top-0 z-10 flex items-center justify-between">
+               <h2 className="serif text-2xl font-bold text-slate-800 dark:text-slate-100">Menu</h2>
+               <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 rounded-full border border-emerald-100 dark:border-emerald-800">
                   <div className={`w-2 h-2 rounded-full ${isSyncing ? 'bg-amber-500 animate-spin' : 'bg-emerald-500'}`} />
-                  <span className="text-[10px] font-black text-emerald-700 uppercase tracking-tighter">
+                  <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-tighter">
                     {isSyncing ? 'Syncing...' : 'Cloud Ready'}
                   </span>
                </div>
@@ -213,13 +219,13 @@ const App: React.FC = () => {
 
              <div className="p-5 space-y-6">
                {/* Profile Section */}
-               <div className="p-5 bg-white rounded-3xl border border-[#E5E1DA] shadow-sm">
+               <div className="p-5 bg-white dark:bg-slate-800 rounded-3xl border border-[#E5E1DA] dark:border-slate-700 shadow-sm">
                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-2xl bg-[#6B0000] text-white flex items-center justify-center font-bold text-xl serif uppercase">
+                    <div className="w-12 h-12 rounded-2xl bg-[#6B0000] dark:bg-[#D4AF37] text-white dark:text-slate-900 flex items-center justify-center font-bold text-xl serif uppercase">
                       {currentUser.full_name.charAt(0)}
                     </div>
                     <div>
-                      <p className="text-base font-bold text-slate-800 leading-none mb-1">{currentUser.full_name}</p>
+                      <p className="text-base font-bold text-slate-800 dark:text-slate-100 leading-none mb-1">{currentUser.full_name}</p>
                       <p className="text-xs text-slate-400">{currentUser.church}</p>
                     </div>
                  </div>
@@ -228,9 +234,9 @@ const App: React.FC = () => {
                {/* Import Status Alert */}
                {importStatus && (
                  <div className={`p-4 rounded-2xl flex items-start gap-3 border animate-in slide-in-from-top-2 duration-300 ${
-                   importStatus.type === 'error' ? 'bg-red-50 border-red-100 text-red-600' : 
-                   importStatus.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 
-                   'bg-blue-50 border-blue-100 text-blue-700'
+                   importStatus.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800 text-red-600 dark:text-red-400' : 
+                   importStatus.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400' : 
+                   'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-400'
                  }`}>
                    {importStatus.type === 'error' ? <AlertCircle className="w-5 h-5 shrink-0" /> : <CheckCircle2 className="w-5 h-5 shrink-0" />}
                    <p className="text-xs font-bold leading-tight">{importStatus.message}</p>
@@ -240,18 +246,53 @@ const App: React.FC = () => {
                {/* Reading Preferences */}
                <section>
                  <div className="flex items-center gap-2 mb-3 px-1">
-                    <Eye className="w-4 h-4 text-[#6B0000]" />
+                    <Eye className="w-4 h-4 text-[#6B0000] dark:text-[#D4AF37]" />
                     <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Reading Preference</h3>
                  </div>
-                 <div className="bg-white rounded-3xl shadow-sm border border-[#E5E1DA] divide-y divide-slate-50 overflow-hidden">
+                 <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-[#E5E1DA] dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-700 overflow-hidden">
+                    <div className="p-4 flex items-center justify-between">
+                       <div className="flex items-center gap-3">
+                         <Moon className="w-5 h-5 text-slate-400" />
+                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Dark Mode</span>
+                       </div>
+                       <button 
+                         onClick={() => {
+                           const newValue = !userSettings.darkMode;
+                           updateSetting('darkMode', newValue);
+                           applyDarkMode(newValue);
+                           if (userSettings.hapticFeedback) haptic.light();
+                         }}
+                         className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ${userSettings.darkMode ? 'bg-[#6B0000] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-600'}`}
+                       >
+                         <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${userSettings.darkMode ? 'translate-x-6' : 'translate-x-0'}`} />
+                       </button>
+                    </div>
+                    <div className="p-4 flex items-center justify-between">
+                       <div className="flex items-center gap-3">
+                         <Smartphone className="w-5 h-5 text-slate-400" />
+                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Haptic Feedback</span>
+                       </div>
+                       <button 
+                         onClick={() => {
+                           updateSetting('hapticFeedback', !userSettings.hapticFeedback);
+                           if (!userSettings.hapticFeedback) haptic.success();
+                         }}
+                         className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ${userSettings.hapticFeedback ? 'bg-[#6B0000] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-600'}`}
+                       >
+                         <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${userSettings.hapticFeedback ? 'translate-x-6' : 'translate-x-0'}`} />
+                       </button>
+                    </div>
                     <div className="p-4 flex items-center justify-between">
                        <div className="flex items-center gap-3">
                          <Type className="w-5 h-5 text-slate-400" />
-                         <span className="text-sm font-bold text-slate-700">Display Font</span>
+                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Display Font</span>
                        </div>
-                       <div className="flex bg-slate-100 p-1 rounded-xl">
+                       <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
                           {(['serif', 'sans'] as const).map(f => (
-                            <button key={f} onClick={() => updateSetting('preferredFont', f)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${userSettings.preferredFont === f ? 'bg-white shadow-sm text-[#6B0000]' : 'text-slate-400'}`}>
+                            <button key={f} onClick={() => {
+                              updateSetting('preferredFont', f);
+                              if (userSettings.hapticFeedback) haptic.light();
+                            }} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${userSettings.preferredFont === f ? 'bg-white dark:bg-slate-600 shadow-sm text-[#6B0000] dark:text-[#D4AF37]' : 'text-slate-400'}`}>
                               {f}
                             </button>
                           ))}
@@ -260,13 +301,46 @@ const App: React.FC = () => {
                     <div className="p-4 flex items-center justify-between">
                        <div className="flex items-center gap-3">
                          <Hash className="w-5 h-5 text-slate-400" />
-                         <span className="text-sm font-bold text-slate-700">Verse Highlighting</span>
+                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Verse Highlighting</span>
                        </div>
                        <button 
-                         onClick={() => updateSetting('highlightVerses', !userSettings.highlightVerses)}
-                         className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ${userSettings.highlightVerses ? 'bg-[#6B0000]' : 'bg-slate-200'}`}
+                         onClick={() => {
+                           updateSetting('highlightVerses', !userSettings.highlightVerses);
+                           if (userSettings.hapticFeedback) haptic.light();
+                         }}
+                         className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ${userSettings.highlightVerses ? 'bg-[#6B0000] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-600'}`}
                        >
                          <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${userSettings.highlightVerses ? 'translate-x-6' : 'translate-x-0'}`} />
+                       </button>
+                    </div>
+                    <div className="p-4 flex items-center justify-between">
+                       <div className="flex items-center gap-3">
+                         <Volume2 className="w-5 h-5 text-slate-400" />
+                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Text-to-Speech</span>
+                       </div>
+                       <button 
+                         onClick={() => {
+                           updateSetting('ttsEnabled', !userSettings.ttsEnabled);
+                           if (userSettings.hapticFeedback) haptic.light();
+                         }}
+                         className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ${userSettings.ttsEnabled ? 'bg-[#6B0000] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-600'}`}
+                       >
+                         <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${userSettings.ttsEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                       </button>
+                    </div>
+                    <div className="p-4 flex items-center justify-between">
+                       <div className="flex items-center gap-3">
+                         <Mic className="w-5 h-5 text-slate-400" />
+                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Voice Search</span>
+                       </div>
+                       <button 
+                         onClick={() => {
+                           updateSetting('voiceSearchEnabled', !userSettings.voiceSearchEnabled);
+                           if (userSettings.hapticFeedback) haptic.light();
+                         }}
+                         className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ${userSettings.voiceSearchEnabled ? 'bg-[#6B0000] dark:bg-[#D4AF37]' : 'bg-slate-200 dark:bg-slate-600'}`}
+                       >
+                         <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${userSettings.voiceSearchEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
                        </button>
                     </div>
                  </div>
@@ -275,18 +349,21 @@ const App: React.FC = () => {
                {/* Data Management Section */}
                <section>
                  <div className="flex items-center gap-2 mb-3 px-1">
-                    <Database className="w-4 h-4 text-[#6B0000]" />
+                    <Database className="w-4 h-4 text-[#6B0000] dark:text-[#D4AF37]" />
                     <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Cloud Management</h3>
                  </div>
-                 <div className="bg-white rounded-3xl shadow-sm border border-[#E5E1DA] overflow-hidden">
+                 <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-[#E5E1DA] dark:border-slate-700 overflow-hidden">
                     <button 
-                      onClick={() => currentUser && syncCloudData(currentUser.id)}
+                      onClick={() => {
+                        if (currentUser) syncCloudData(currentUser.id);
+                        if (userSettings.hapticFeedback) haptic.medium();
+                      }}
                       disabled={isSyncing}
-                      className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-all active:bg-slate-100"
+                      className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:bg-slate-100 dark:active:bg-slate-600"
                     >
                       <div className="flex items-center gap-3">
-                        <RefreshCw className={`w-5 h-5 text-slate-400 ${isSyncing ? 'animate-spin text-[#6B0000]' : ''}`} />
-                        <span className="text-sm font-bold text-slate-700">Refresh Data Sync</span>
+                        <RefreshCw className={`w-5 h-5 text-slate-400 ${isSyncing ? 'animate-spin text-[#6B0000] dark:text-[#D4AF37]' : ''}`} />
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Refresh Data Sync</span>
                       </div>
                       <ChevronRight className="w-4 h-4 text-slate-300" />
                     </button>
@@ -295,35 +372,35 @@ const App: React.FC = () => {
 
                <section>
                  <div className="flex items-center gap-2 mb-3 px-1">
-                    <UploadCloud className="w-4 h-4 text-[#6B0000]" />
+                    <UploadCloud className="w-4 h-4 text-[#6B0000] dark:text-[#D4AF37]" />
                     <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Data & Import</h3>
                  </div>
-                 <div className="bg-white rounded-3xl shadow-sm border border-[#E5E1DA] divide-y divide-slate-50 overflow-hidden">
-                    <button onClick={() => fileInputRef.current?.click()} className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-all">
+                 <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-[#E5E1DA] dark:border-slate-700 divide-y divide-slate-50 dark:divide-slate-700 overflow-hidden">
+                    <button onClick={() => { fileInputRef.current?.click(); if (userSettings.hapticFeedback) haptic.light(); }} className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
                        <div className="flex items-center gap-3">
                          <FileText className="w-5 h-5 text-slate-400" />
-                         <span className="text-sm font-bold text-slate-700">Import Law (.docx)</span>
+                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Import Law (.docx)</span>
                        </div>
                        <ChevronRight className="w-4 h-4 text-slate-300" />
                     </button>
-                    <button onClick={() => hymnInputRef.current?.click()} className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-all">
+                    <button onClick={() => { hymnInputRef.current?.click(); if (userSettings.hapticFeedback) haptic.light(); }} className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
                        <div className="flex items-center gap-3">
                          <Music className="w-5 h-5 text-slate-400" />
-                         <span className="text-sm font-bold text-slate-700">Import Hymnal (.json)</span>
+                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Import Hymnal (.json)</span>
                        </div>
                        <ChevronRight className="w-4 h-4 text-slate-300" />
                     </button>
-                    <button onClick={() => setSections(SAMPLE_SECTIONS)} className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-all">
+                    <button onClick={() => { setSections(SAMPLE_SECTIONS); if (userSettings.hapticFeedback) haptic.success(); }} className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
                        <div className="flex items-center gap-3">
                          <Landmark className="w-5 h-5 text-slate-400" />
-                         <span className="text-sm font-bold text-slate-700">Load Sample Law Data</span>
+                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Load Sample Law Data</span>
                        </div>
                        <ChevronRight className="w-4 h-4 text-slate-300" />
                     </button>
                  </div>
                </section>
 
-               <button onClick={handleSignOut} className="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold flex items-center justify-center gap-3 active:scale-[0.98] transition-all border border-red-100">
+               <button onClick={handleSignOut} className="w-full py-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-2xl font-bold flex items-center justify-center gap-3 active:scale-[0.98] transition-all border border-red-100 dark:border-red-800">
                  <LogOut className="w-5 h-5" />
                  Sign Out from Device
                </button>
@@ -357,20 +434,20 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto bg-white relative overflow-hidden shadow-2xl">
+    <div className="flex flex-col h-screen w-full max-w-[430px] mx-auto bg-white dark:bg-slate-900 relative overflow-hidden shadow-2xl">
       <div className="flex-1 overflow-hidden relative">
         {renderTabContent()}
       </div>
 
-      <nav className="bg-white/95 backdrop-blur-xl border-t border-[#E5E1DA] flex items-center justify-around h-20 safe-area-bottom px-2 z-40">
-        <TabButton active={activeTab === AppTab.Search} onClick={() => setActiveTab(AppTab.Search)} icon={<Search />} label="Law" />
-        <TabButton active={activeTab === AppTab.Hymnal} onClick={() => setActiveTab(AppTab.Hymnal)} icon={<Music />} label="Hymns" />
-        <TabButton active={activeTab === AppTab.Favorites} onClick={() => setActiveTab(AppTab.Favorites)} icon={<Heart />} label="Favs" />
-        <TabButton active={activeTab === AppTab.Bookmarks} onClick={() => setActiveTab(AppTab.Bookmarks)} icon={<BookmarkIcon />} label="Marks" />
+      <nav className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border-t border-[#E5E1DA] dark:border-slate-700 flex items-center justify-around h-20 safe-area-bottom px-2 z-40">
+        <TabButton active={activeTab === AppTab.Search} onClick={() => { setActiveTab(AppTab.Search); if (userSettings.hapticFeedback) haptic.light(); }} icon={<Search />} label="Law" />
+        <TabButton active={activeTab === AppTab.Hymnal} onClick={() => { setActiveTab(AppTab.Hymnal); if (userSettings.hapticFeedback) haptic.light(); }} icon={<Music />} label="Hymns" />
+        <TabButton active={activeTab === AppTab.Favorites} onClick={() => { setActiveTab(AppTab.Favorites); if (userSettings.hapticFeedback) haptic.light(); }} icon={<Heart />} label="Favs" />
+        <TabButton active={activeTab === AppTab.Bookmarks} onClick={() => { setActiveTab(AppTab.Bookmarks); if (userSettings.hapticFeedback) haptic.light(); }} icon={<BookmarkIcon />} label="Marks" />
         {currentUser.role === 'admin' && (
-          <TabButton active={activeTab === AppTab.Admin} onClick={() => setActiveTab(AppTab.Admin)} icon={<ShieldAlert />} label="Admin" />
+          <TabButton active={activeTab === AppTab.Admin} onClick={() => { setActiveTab(AppTab.Admin); if (userSettings.hapticFeedback) haptic.light(); }} icon={<ShieldAlert />} label="Admin" />
         )}
-        <TabButton active={activeTab === AppTab.Settings} onClick={() => setActiveTab(AppTab.Settings)} icon={<Settings />} label="Menu" />
+        <TabButton active={activeTab === AppTab.Settings} onClick={() => { setActiveTab(AppTab.Settings); if (userSettings.hapticFeedback) haptic.light(); }} icon={<Settings />} label="Menu" />
       </nav>
 
       {selectedSection && (
@@ -395,11 +472,11 @@ interface TabButtonProps {
 
 const TabButton: React.FC<TabButtonProps> = ({ active, onClick, icon, label }) => (
   <button onClick={onClick} className="flex flex-col items-center justify-center w-full h-full relative group">
-    <div className={`p-1.5 rounded-xl transition-all duration-300 ${active ? 'bg-[#6B0000]/10 text-[#6B0000]' : 'text-slate-400 group-hover:text-slate-600'}`}>
+    <div className={`p-1.5 rounded-xl transition-all duration-300 ${active ? 'bg-[#6B0000]/10 dark:bg-[#D4AF37]/10 text-[#6B0000] dark:text-[#D4AF37]' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}>
       {React.cloneElement(icon as React.ReactElement<any>, { className: 'w-6 h-6 mb-0.5' })}
     </div>
-    <span className={`text-[9px] font-bold uppercase tracking-widest ${active ? 'text-[#6B0000]' : 'text-slate-400'}`}>{label}</span>
-    {active && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#6B0000] rounded-b-full shadow-[0_0_10px_#6B0000]" />}
+    <span className={`text-[9px] font-bold uppercase tracking-widest ${active ? 'text-[#6B0000] dark:text-[#D4AF37]' : 'text-slate-400'}`}>{label}</span>
+    {active && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#6B0000] dark:bg-[#D4AF37] rounded-b-full shadow-[0_0_10px_#6B0000] dark:shadow-[0_0_10px_#D4AF37]" />}
   </button>
 );
 

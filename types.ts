@@ -19,6 +19,10 @@ export interface UserSettings {
   defaultFontSize: 'sm' | 'base' | 'lg' | 'xl';
   autoSync: boolean;
   highlightVerses: boolean;
+  darkMode: boolean;
+  hapticFeedback: boolean;
+  voiceSearchEnabled: boolean;
+  ttsEnabled: boolean;
 }
 
 export interface Section {
@@ -76,4 +80,34 @@ export interface SearchResult {
   section: Section;
   matches: { start: number; end: number }[];
   snippet: string;
+}
+
+export interface ReadingHistory {
+  id: string;
+  itemId: string | number;
+  itemType: 'section' | 'hymn';
+  title: string;
+  lastReadAt: number;
+  readCount: number;
+}
+
+export interface SearchHistory {
+  query: string;
+  timestamp: number;
+}
+
+export interface ReadingProgress {
+  sectionId: string;
+  progress: number; // 0-100
+  lastPosition: number;
+  updatedAt: number;
+}
+
+export interface Note {
+  id: string;
+  itemId: string | number;
+  itemType: 'section' | 'hymn';
+  content: string;
+  createdAt: number;
+  updatedAt: number;
 }
