@@ -13,6 +13,25 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <title>Methodist Constitution & Standing Orders</title>
+  <script>
+    // Configure Tailwind before it loads
+    tailwind.config = {
+      darkMode: 'class'
+    }
+    
+    // Apply dark mode immediately if set in localStorage
+    try {
+      const settings = localStorage.getItem('mcso_user_settings');
+      if (settings) {
+        const parsed = JSON.parse(settings);
+        if (parsed.darkMode) {
+          document.documentElement.classList.add('dark');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to apply dark mode on load:', e);
+    }
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
