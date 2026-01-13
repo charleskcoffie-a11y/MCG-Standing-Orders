@@ -24,12 +24,12 @@ export const AdminView: React.FC = () => {
 
   return (
     <div className="h-full bg-[#FBF9F6] flex flex-col overflow-hidden">
-      <div className="p-6 bg-white border-b border-[#E5E1DA] flex justify-between items-center sticky top-0 z-10">
+      <div className="p-4 bg-white border-b border-[#E5E1DA] flex justify-between items-center sticky top-0 z-10">
         <div>
-          <h2 className="serif text-2xl font-bold text-[#6B0000]">Admin Panel</h2>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Pending Approvals</p>
+          <h2 className="serif text-lg font-bold text-[#6B0000]">Admin Panel</h2>
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Pending</p>
         </div>
-        <button onClick={fetchUsers} className="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-[#6B0000] transition-colors">
+        <button onClick={fetchUsers} className="p-2.5 bg-slate-50 rounded-xl text-slate-400 hover:text-[#6B0000] transition-colors">
           <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
@@ -50,37 +50,37 @@ export const AdminView: React.FC = () => {
           </div>
         ) : (
           pendingUsers.map(user => (
-            <div key={user.id} className="bg-white rounded-3xl p-6 shadow-sm border border-[#E5E1DA] animate-in fade-in slide-in-from-bottom-4">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 bg-[#6B0000]/5 rounded-2xl flex items-center justify-center shrink-0">
-                  <User className="w-6 h-6 text-[#6B0000]" />
+            <div key={user.id} className="bg-white rounded-2xl p-4 shadow-sm border border-[#E5E1DA] animate-in fade-in slide-in-from-bottom-4">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 bg-[#6B0000]/5 rounded-xl flex items-center justify-center shrink-0">
+                  <User className="w-5 h-5 text-[#6B0000]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="serif text-lg font-bold text-slate-900 truncate">{user.full_name}</h3>
-                  <div className="flex items-center gap-2 text-slate-400 text-xs mt-1">
+                  <h3 className="serif text-sm font-bold text-slate-900 truncate">{user.full_name}</h3>
+                  <div className="flex items-center gap-1.5 text-slate-400 text-[11px] mt-0.5">
                     <Mail className="w-3 h-3" />
                     <span className="truncate">{user.email}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-400 text-xs mt-0.5">
+                  <div className="flex items-center gap-1.5 text-slate-400 text-[11px] mt-0.5">
                     <Landmark className="w-3 h-3" />
                     <span className="truncate">{user.church}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 <button 
                   onClick={() => handleAction(user.id, true)}
-                  className="flex-1 py-3 bg-emerald-500 text-white rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-emerald-500/20"
+                  className="flex-1 py-2.5 bg-emerald-500 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-md shadow-emerald-500/20"
                 >
-                  <Check className="w-5 h-5" />
+                  <Check className="w-4 h-4" />
                   Approve
                 </button>
                 <button 
                    onClick={() => handleAction(user.id, false)}
-                   className="px-6 py-3 bg-slate-100 text-slate-400 rounded-2xl font-bold flex items-center justify-center hover:bg-red-50 hover:text-red-500 active:scale-95 transition-all"
+                   className="px-4 py-2.5 bg-slate-100 text-slate-400 rounded-xl font-bold text-sm flex items-center justify-center hover:bg-red-50 hover:text-red-500 active:scale-95 transition-all"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>

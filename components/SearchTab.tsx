@@ -93,16 +93,16 @@ export const SearchTab: React.FC<SearchTabProps> = ({ sections, onSelectSection 
 
   return (
     <div className="flex flex-col h-full bg-[#FBF9F6]">
-      <header className="px-5 pt-8 pb-4 bg-white/80 backdrop-blur-md border-b border-[#E5E1DA] sticky top-0 z-20">
-        <h1 className="serif text-2xl font-bold text-[#6B0000] mb-4">Methodist Church Law</h1>
+      <header className="px-4 pt-6 pb-3 bg-white/80 backdrop-blur-md border-b border-[#E5E1DA] sticky top-0 z-20">
+        <h1 className="serif text-xl font-bold text-[#6B0000] mb-3">Methodist Law</h1>
         <div className="relative group">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-slate-400 group-focus-within:text-[#6B0000] transition-colors" />
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-slate-400 group-focus-within:text-[#6B0000] transition-colors" />
           </div>
           <input
             type="text"
-            className="block w-full pl-11 pr-4 py-3.5 bg-slate-100/50 border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-[#6B0000]/20 focus:border-[#6B0000] transition-all outline-none text-base placeholder-slate-400 shadow-inner"
-            placeholder="Search S.O, Constitution or keyword..."
+            className="block w-full pl-10 pr-3 py-3 bg-slate-100/50 border border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-[#6B0000]/20 focus:border-[#6B0000] transition-all outline-none text-sm placeholder-slate-400 shadow-inner"
+            placeholder="Search S.O or keyword..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
