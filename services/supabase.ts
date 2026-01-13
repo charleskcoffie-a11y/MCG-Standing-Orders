@@ -26,7 +26,12 @@ async function sbFetch(path: string, options: RequestInit = {}) {
     try {
       const errorJson = JSON.parse(errorText);
       errorMessage = errorJson.message || errorMessage;
-      console.error("Supabase Detailed Error:", errorJson);
+      console.error("Supabase Detailed Error:", JSON.stringify(errorJson, null, 2));
+      
+      // Special handling for duplicate keys
+      if (errorJson.code === "23505") {
+        return { _isDuplicate: true, message: errorJson.message };
+      }
     } catch (e) {
       console.error("Supabase Raw Error:", errorText);
     }
@@ -112,6 +117,7 @@ export const SupabaseService = {
   },
 
   async uploadSections(sections: Section[]) {
+    // Upsert logic to prevent duplicate primary keys
     const payload = sections.map(s => ({
       title: s.title,
       content: s.content,
@@ -121,6 +127,7 @@ export const SupabaseService = {
     
     return await sbFetch('sections', {
       method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates, return=representation' },
       body: JSON.stringify(payload)
     });
   },
@@ -139,10 +146,20 @@ export const SupabaseService = {
       lyrics: h.lyrics,
       tags: h.tags
     }));
-    return await sbFetch('hymns', {
+
+    // Use Upsert behavior to avoid 23505 error if record already exists
+    const result = await sbFetch('hymns', {
       method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates, return=representation' },
       body: JSON.stringify(payload)
     });
+
+    if (result && result._isDuplicate) {
+       // If standard POST with resolution header fails for some reason, 
+       // we still return a friendly indication that the operation was redundant
+       return { success: true, message: "Records already existed." };
+    }
+    return result;
   },
 
   async getFavorites(userId: string): Promise<Favorite[]> {
@@ -166,6 +183,7 @@ export const SupabaseService = {
     
     return await sbFetch('favorites', {
       method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates, return=representation' },
       body: JSON.stringify(body)
     });
   },

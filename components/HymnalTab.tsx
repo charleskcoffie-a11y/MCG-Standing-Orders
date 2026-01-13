@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Hymn, Favorite } from '../types';
 import { Search, Music, ChevronRight, ArrowLeft, BookOpen, Heart, Type } from 'lucide-react';
+import { StorageService } from '../services/storage';
 
 interface HymnalTabProps {
   hymns: Hymn[];
@@ -17,6 +18,7 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
   const [selectedHymn, setSelectedHymn] = useState<Hymn | null>(null);
   const [activeCollection, setActiveCollection] = useState<CollectionType>('ALL');
   const [fontSize, setFontSize] = useState<FontSize>('base');
+  const settings = StorageService.getSettings();
 
   const isHymnFav = (id: number) => favorites.some(f => f.hymnId === id);
 
@@ -24,6 +26,26 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
     const sizes: FontSize[] = ['sm', 'base', 'lg', 'xl'];
     const nextIndex = (sizes.indexOf(fontSize) + 1) % sizes.length;
     setFontSize(sizes[nextIndex]);
+  };
+
+  const formatLyrics = (text: string) => {
+    if (!settings.highlightVerses) return text;
+    
+    // Improved regex to detect verse numbers at the start of paragraphs/lines
+    const verseRegex = /((?:^|\n)\d+[\.\)]\s*)/g;
+    const parts = text.split(verseRegex);
+    
+    return parts.map((part, i) => {
+      // If it looks like a verse number (digit + . or ) at start)
+      if (/^\s*\d+[\.\)]/.test(part)) {
+        return (
+          <span key={i} className="text-[#6B0000] font-black inline-block mr-1 mt-1">
+            {part.trim()}
+          </span>
+        );
+      }
+      return part;
+    });
   };
 
   const filteredHymns = useMemo(() => {
@@ -91,9 +113,8 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
                 <span className="text-[9px] text-[#6B0000] font-black uppercase tracking-tighter bg-[#6B0000]/5 px-2 py-0.5 rounded">Ref: {selectedHymn.code}</span>
               </div>
             </div>
-            {/* Reduced line-height from leading-snug to leading-[1.3] for a tighter, classic hymnal feel */}
-            <div className={`serif ${fontSizeClass} text-slate-800 leading-[1.35] whitespace-pre-wrap font-normal`}>
-              {selectedHymn.lyrics}
+            <div className={`serif ${fontSizeClass} text-slate-800 leading-[1.25] whitespace-pre-wrap font-normal`}>
+              {formatLyrics(selectedHymn.lyrics)}
             </div>
           </div>
         </main>

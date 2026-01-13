@@ -12,7 +12,7 @@ import { Reader } from './components/Reader';
 import { AuthView } from './components/AuthView';
 import { PendingView } from './components/PendingView';
 import { AdminView } from './components/AdminView';
-import { Search, Heart, Bookmark as BookmarkIcon, Settings, RefreshCw, FileText, Loader2, LogOut, ShieldAlert, AlertCircle, CheckCircle2, Music, Database, Type, Eye, Globe, Cloud, Landmark } from 'lucide-react';
+import { Search, Heart, Bookmark as BookmarkIcon, Settings, RefreshCw, FileText, Loader2, LogOut, ShieldAlert, AlertCircle, CheckCircle2, Music, Database, Type, Eye, Globe, Cloud, Landmark, Hash, UploadCloud, ChevronRight } from 'lucide-react';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.Search);
@@ -22,7 +22,6 @@ const App: React.FC = () => {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [sections, setSections] = useState<Section[]>(SAMPLE_SECTIONS);
   const [hymns, setHymns] = useState<Hymn[]>([]);
-  const [isImporting, setIsImporting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [importStatus, setImportStatus] = useState<{message: string, type: 'info' | 'error' | 'success'} | null>(null);
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
@@ -64,6 +63,76 @@ const App: React.FC = () => {
     }
   };
 
+  const toggleFavorite = async (id: string | number, type: 'section' | 'hymn') => {
+    if (!currentUser) return;
+    const isCurrentlyFav = type === 'section' 
+      ? favorites.some(f => f.sectionId === id)
+      : favorites.some(f => f.hymnId === id);
+    
+    const newFavs = isCurrentlyFav 
+      ? favorites.filter(f => type === 'section' ? f.sectionId !== id : f.hymnId !== id)
+      : [...favorites, type === 'section' 
+          ? { sectionId: id as string, itemType: 'section', createdAt: Date.now() } 
+          : { hymnId: id as number, itemType: 'hymn', createdAt: Date.now() }
+        ];
+    
+    setFavorites(newFavs as Favorite[]);
+
+    try {
+      if (isCurrentlyFav) {
+        await SupabaseService.removeFavorite(currentUser.id, id, type);
+      } else {
+        await SupabaseService.addFavorite(currentUser.id, id, type);
+      }
+    } catch (e) {
+      console.error("Fav sync failed", e);
+      await syncCloudData(currentUser.id);
+    }
+  };
+
+  const handleImportLaw = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportStatus({ message: 'Parsing document...', type: 'info' });
+    try {
+      const parsed = await DocxParser.parseFile(file);
+      setSections(parsed);
+      setImportStatus({ message: `Successfully parsed ${parsed.length} sections locally.`, type: 'success' });
+      if (currentUser?.role === 'admin') {
+        const result = await SupabaseService.uploadSections(parsed);
+        const fresh = await SupabaseService.getSections();
+        setSections(fresh);
+        setImportStatus({ message: `Cloud database updated successfully.`, type: 'success' });
+      }
+    } catch (err: any) {
+      setImportStatus({ message: err.message, type: 'error' });
+    }
+  };
+
+  const handleImportHymnal = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportStatus({ message: 'Processing Hymnal JSON...', type: 'info' });
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (currentUser?.role === 'admin') {
+        const result = await SupabaseService.uploadHymns(data);
+        const fresh = await SupabaseService.getHymns();
+        setHymns(fresh);
+        const msg = (result && result._isDuplicate) 
+          ? "Hymns already existed in cloud." 
+          : `Successfully imported ${data.length} hymns to cloud.`;
+        setImportStatus({ message: msg, type: 'success' });
+      } else {
+        setHymns(data);
+        setImportStatus({ message: `Loaded ${data.length} hymns locally.`, type: 'success' });
+      }
+    } catch (err: any) {
+      setImportStatus({ message: err.message || 'Invalid JSON format', type: 'error' });
+    }
+  };
+
   const handleAuthenticated = async () => {
     const user = SupabaseService.getCurrentUser();
     setCurrentUser(user);
@@ -73,10 +142,6 @@ const App: React.FC = () => {
   const handleSignOut = () => {
     SupabaseService.signOut();
     setCurrentUser(null);
-  };
-
-  const handleBack = () => {
-    setSelectedSection(null);
   };
 
   const handleSelectSection = (section: Section, query: string = '') => {
@@ -90,100 +155,6 @@ const App: React.FC = () => {
     StorageService.saveSettings(newSettings);
   };
 
-  const toggleFavorite = async (id: string | number, type: 'section' | 'hymn') => {
-    if (!currentUser) return;
-    const isCurrentlyFav = type === 'section' 
-      ? favorites.some(f => f.sectionId === id)
-      : favorites.some(f => f.hymnId === id);
-    
-    const newFavs = isCurrentlyFav 
-      ? favorites.filter(f => type === 'section' ? f.sectionId !== id : f.hymnId !== id)
-      : [...favorites, type === 'section' ? { sectionId: id as string, createdAt: Date.now() } : { hymnId: id as number, createdAt: Date.now() }];
-    
-    setFavorites(newFavs as any);
-
-    try {
-      if (isCurrentlyFav) {
-        await SupabaseService.removeFavorite(currentUser.id, id, type);
-      } else {
-        await SupabaseService.addFavorite(currentUser.id, id, type);
-      }
-    } catch (e) {
-      console.error("Fav sync failed", e);
-      setFavorites(favorites);
-    }
-  };
-
-  const handleCheckUpdates = async () => {
-    if (!currentUser) return;
-    setImportStatus({ message: "Syncing with cloud...", type: 'info' });
-    await syncCloudData(currentUser.id);
-    setImportStatus({ message: "Cloud sync complete!", type: 'success' });
-    setTimeout(() => setImportStatus(null), 2000);
-  };
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setIsImporting(true);
-    setImportStatus({ message: "Parsing & Uploading to Cloud...", type: 'info' });
-    try {
-      const parsedSections = await DocxParser.parseFile(file);
-      if (parsedSections.length > 0) {
-        await SupabaseService.uploadSections(parsedSections);
-        const updated = await SupabaseService.getSections();
-        setSections(updated);
-        setImportStatus({ message: `Success! Loaded ${parsedSections.length} sections.`, type: 'success' });
-        setTimeout(() => setImportStatus(null), 4000);
-      }
-    } catch (error: any) {
-      setImportStatus({ message: error.message || "Upload failed. Check SQL Policies.", type: 'error' });
-    } finally {
-      setIsImporting(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const handleHymnImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setIsImporting(true);
-    setImportStatus({ message: "Syncing Hymnal to Cloud...", type: 'info' });
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-      if (Array.isArray(parsed)) {
-        await SupabaseService.uploadHymns(parsed);
-        const updated = await SupabaseService.getHymns();
-        setHymns(updated);
-        setImportStatus({ message: `Hymnal cloud sync successful.`, type: 'success' });
-        setTimeout(() => setImportStatus(null), 4000);
-      }
-    } catch (error: any) {
-      setImportStatus({ message: "Hymn sync failed. Check SQL Policies.", type: 'error' });
-    } finally {
-      setIsImporting(false);
-      if (hymnInputRef.current) hymnInputRef.current.value = '';
-    }
-  };
-
-  if (!isInitialized) return (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-[#FBF9F6]">
-      <Landmark className="w-12 h-12 text-[#6B0000] animate-pulse mb-4" />
-      <p className="serif text-lg font-bold text-slate-400">Opening the Law...</p>
-    </div>
-  );
-  
-  if (!currentUser) return <AuthView onAuthenticated={handleAuthenticated} />;
-
-  if (currentUser.status === 'pending' || currentUser.status === 'rejected') {
-    return <PendingView user={currentUser} onStatusUpdate={() => setCurrentUser({...currentUser, status: 'approved'})} onSignOut={handleSignOut} />;
-  }
-
-  const currentIndex = selectedSection ? sections.findIndex(s => s.id === selectedSection.id) : -1;
-  const nextSection = currentIndex !== -1 && currentIndex < sections.length - 1 ? sections[currentIndex + 1] : undefined;
-  const prevSection = currentIndex > 0 ? sections[currentIndex - 1] : undefined;
-
   const renderTabContent = () => {
     switch (activeTab) {
       case AppTab.Search:
@@ -191,7 +162,15 @@ const App: React.FC = () => {
       case AppTab.Hymnal:
         return <HymnalTab hymns={hymns} favorites={favorites} onToggleFavorite={(id) => toggleFavorite(id, 'hymn')} />;
       case AppTab.Favorites:
-        return <FavoritesTab favorites={favorites} sections={sections} onSelectSection={(s) => handleSelectSection(s)} />;
+        return (
+          <FavoritesTab 
+            favorites={favorites} 
+            sections={sections} 
+            hymns={hymns}
+            onSelectSection={(s) => handleSelectSection(s)} 
+            onToggleFavorite={toggleFavorite}
+          />
+        );
       case AppTab.Admin:
         return <AdminView />;
       case AppTab.Bookmarks:
@@ -233,6 +212,7 @@ const App: React.FC = () => {
              </div>
 
              <div className="p-5 space-y-6">
+               {/* Profile Section */}
                <div className="p-5 bg-white rounded-3xl border border-[#E5E1DA] shadow-sm">
                  <div className="flex items-center gap-4 mb-4">
                     <div className="w-12 h-12 rounded-2xl bg-[#6B0000] text-white flex items-center justify-center font-bold text-xl serif uppercase">
@@ -243,34 +223,27 @@ const App: React.FC = () => {
                       <p className="text-xs text-slate-400">{currentUser.church}</p>
                     </div>
                  </div>
-                 <div className="bg-slate-50 rounded-2xl p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
-                       <Cloud className="w-4 h-4 text-slate-400 shrink-0" />
-                       <span className="text-[10px] font-bold text-slate-500 uppercase truncate">Sync Active</span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-md bg-white border border-slate-100 text-[9px] font-black uppercase text-slate-400 shrink-0">{currentUser.role}</span>
-                 </div>
                </div>
 
+               {/* Import Status Alert */}
                {importStatus && (
-                 <div className={`p-4 rounded-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-2 ${
+                 <div className={`p-4 rounded-2xl flex items-start gap-3 border animate-in slide-in-from-top-2 duration-300 ${
                    importStatus.type === 'error' ? 'bg-red-50 border-red-100 text-red-600' : 
-                   importStatus.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 
-                   'bg-blue-50 border-blue-100 text-blue-600'
+                   importStatus.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 
+                   'bg-blue-50 border-blue-100 text-blue-700'
                  }`}>
-                   {importStatus.type === 'error' ? <AlertCircle className="w-5 h-5 shrink-0" /> : 
-                    importStatus.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0" /> : 
-                    <Loader2 className="w-5 h-5 animate-spin shrink-0" />}
-                   <p className="text-sm font-bold">{importStatus.message}</p>
+                   {importStatus.type === 'error' ? <AlertCircle className="w-5 h-5 shrink-0" /> : <CheckCircle2 className="w-5 h-5 shrink-0" />}
+                   <p className="text-xs font-bold leading-tight">{importStatus.message}</p>
                  </div>
                )}
 
+               {/* Reading Preferences */}
                <section>
                  <div className="flex items-center gap-2 mb-3 px-1">
                     <Eye className="w-4 h-4 text-[#6B0000]" />
                     <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Reading Preference</h3>
                  </div>
-                 <div className="bg-white rounded-3xl shadow-sm border border-[#E5E1DA] divide-y divide-slate-50">
+                 <div className="bg-white rounded-3xl shadow-sm border border-[#E5E1DA] divide-y divide-slate-50 overflow-hidden">
                     <div className="p-4 flex items-center justify-between">
                        <div className="flex items-center gap-3">
                          <Type className="w-5 h-5 text-slate-400" />
@@ -286,45 +259,67 @@ const App: React.FC = () => {
                     </div>
                     <div className="p-4 flex items-center justify-between">
                        <div className="flex items-center gap-3">
-                         <div className="w-5 h-5 flex items-center justify-center font-bold text-slate-400">A</div>
-                         <span className="text-sm font-bold text-slate-700">Default Size</span>
+                         <Hash className="w-5 h-5 text-slate-400" />
+                         <span className="text-sm font-bold text-slate-700">Verse Highlighting</span>
                        </div>
-                       <div className="flex bg-slate-100 p-1 rounded-xl">
-                          {(['sm', 'base', 'lg', 'xl'] as const).map(s => (
-                            <button key={s} onClick={() => updateSetting('defaultFontSize', s)} className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black uppercase transition-all ${userSettings.defaultFontSize === s ? 'bg-white shadow-sm text-[#6B0000]' : 'text-slate-400'}`}>
-                              {s}
-                            </button>
-                          ))}
-                       </div>
+                       <button 
+                         onClick={() => updateSetting('highlightVerses', !userSettings.highlightVerses)}
+                         className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ${userSettings.highlightVerses ? 'bg-[#6B0000]' : 'bg-slate-200'}`}
+                       >
+                         <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${userSettings.highlightVerses ? 'translate-x-6' : 'translate-x-0'}`} />
+                       </button>
                     </div>
+                 </div>
+               </section>
+
+               {/* Data Management Section */}
+               <section>
+                 <div className="flex items-center gap-2 mb-3 px-1">
+                    <Database className="w-4 h-4 text-[#6B0000]" />
+                    <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Cloud Management</h3>
+                 </div>
+                 <div className="bg-white rounded-3xl shadow-sm border border-[#E5E1DA] overflow-hidden">
+                    <button 
+                      onClick={() => currentUser && syncCloudData(currentUser.id)}
+                      disabled={isSyncing}
+                      className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-all active:bg-slate-100"
+                    >
+                      <div className="flex items-center gap-3">
+                        <RefreshCw className={`w-5 h-5 text-slate-400 ${isSyncing ? 'animate-spin text-[#6B0000]' : ''}`} />
+                        <span className="text-sm font-bold text-slate-700">Refresh Data Sync</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-300" />
+                    </button>
                  </div>
                </section>
 
                <section>
                  <div className="flex items-center gap-2 mb-3 px-1">
-                    <Globe className="w-4 h-4 text-[#6B0000]" />
-                    <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Data Management</h3>
+                    <UploadCloud className="w-4 h-4 text-[#6B0000]" />
+                    <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Data & Import</h3>
                  </div>
-                 <div className="bg-white rounded-3xl shadow-sm border border-[#E5E1DA] overflow-hidden">
-                   <button onClick={handleCheckUpdates} className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 border-b text-left transition-colors">
-                     <RefreshCw className="w-5 h-5 text-emerald-500" />
-                     <div className="flex-1">
-                       <h3 className="text-sm font-bold text-slate-900">Force Cloud Refresh</h3>
-                       <p className="text-[10px] text-slate-400">Pull latest Law and Hymnal from Supabase</p>
-                     </div>
-                   </button>
-                   <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 border-b text-left transition-colors">
-                     <FileText className="w-5 h-5 text-blue-500" />
-                     <div className="flex-1">
-                       <h3 className="text-sm font-bold text-slate-900">Upload Law to Cloud (.docx)</h3>
-                     </div>
-                   </button>
-                   <button onClick={() => hymnInputRef.current?.click()} className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 border-b text-left transition-colors">
-                     <Music className="w-5 h-5 text-[#6B0000]" />
-                     <div className="flex-1">
-                       <h3 className="text-sm font-bold text-slate-900">Upload Hymnal to Cloud (JSON)</h3>
-                     </div>
-                   </button>
+                 <div className="bg-white rounded-3xl shadow-sm border border-[#E5E1DA] divide-y divide-slate-50 overflow-hidden">
+                    <button onClick={() => fileInputRef.current?.click()} className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-all">
+                       <div className="flex items-center gap-3">
+                         <FileText className="w-5 h-5 text-slate-400" />
+                         <span className="text-sm font-bold text-slate-700">Import Law (.docx)</span>
+                       </div>
+                       <ChevronRight className="w-4 h-4 text-slate-300" />
+                    </button>
+                    <button onClick={() => hymnInputRef.current?.click()} className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-all">
+                       <div className="flex items-center gap-3">
+                         <Music className="w-5 h-5 text-slate-400" />
+                         <span className="text-sm font-bold text-slate-700">Import Hymnal (.json)</span>
+                       </div>
+                       <ChevronRight className="w-4 h-4 text-slate-300" />
+                    </button>
+                    <button onClick={() => setSections(SAMPLE_SECTIONS)} className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-all">
+                       <div className="flex items-center gap-3">
+                         <Landmark className="w-5 h-5 text-slate-400" />
+                         <span className="text-sm font-bold text-slate-700">Load Sample Law Data</span>
+                       </div>
+                       <ChevronRight className="w-4 h-4 text-slate-300" />
+                    </button>
                  </div>
                </section>
 
@@ -333,13 +328,20 @@ const App: React.FC = () => {
                  Sign Out from Device
                </button>
              </div>
-             <input type="file" ref={fileInputRef} className="hidden" accept=".docx" onChange={handleFileChange} />
-             <input type="file" ref={hymnInputRef} className="hidden" accept=".json" onChange={handleHymnImport} />
+
+             <input ref={fileInputRef} type="file" accept=".docx" className="hidden" onChange={handleImportLaw} />
+             <input ref={ hymnInputRef } type="file" accept=".json" className="hidden" onChange={handleImportHymnal} />
           </div>
         );
       default: return null;
     }
   };
+
+  if (!isInitialized) return null;
+  if (!currentUser) return <AuthView onAuthenticated={handleAuthenticated} />;
+  if (currentUser.status === 'pending' || currentUser.status === 'rejected') {
+    return <PendingView user={currentUser} onStatusUpdate={() => setCurrentUser({...currentUser, status: 'approved'})} onSignOut={handleSignOut} />;
+  }
 
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-white relative overflow-hidden shadow-2xl">
@@ -364,9 +366,7 @@ const App: React.FC = () => {
           searchQuery={searchQuery} 
           isFavorite={favorites.some(f => f.sectionId === selectedSection.id)}
           onToggleFavorite={() => toggleFavorite(selectedSection.id, 'section')}
-          onBack={handleBack}
-          onNext={nextSection ? () => setSelectedSection(nextSection) : undefined}
-          onPrev={prevSection ? () => setSelectedSection(prevSection) : undefined}
+          onBack={() => setSelectedSection(null)}
         />
       )}
     </div>

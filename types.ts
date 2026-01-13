@@ -18,6 +18,7 @@ export interface UserSettings {
   preferredFont: 'serif' | 'sans';
   defaultFontSize: 'sm' | 'base' | 'lg' | 'xl';
   autoSync: boolean;
+  highlightVerses: boolean;
 }
 
 export interface Section {

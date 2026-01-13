@@ -13,7 +13,8 @@ const KEYS = {
 const DEFAULT_SETTINGS: UserSettings = {
   preferredFont: 'serif',
   defaultFontSize: 'base',
-  autoSync: true
+  autoSync: true,
+  highlightVerses: true
 };
 
 export const StorageService = {
