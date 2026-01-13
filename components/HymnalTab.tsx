@@ -39,7 +39,7 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
     const verses = text.split(/\n\n+/);
     
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         {verses.map((verse, vIndex) => {
           const lines = verse.trim().split('\n');
           const firstLine = lines[0];
@@ -50,15 +50,15 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
           if (verseNumberMatch) {
             const [, number, restOfLine] = verseNumberMatch;
             return (
-              <div key={vIndex} className="bg-white/30 dark:bg-slate-800/30 rounded-2xl p-4 backdrop-blur-sm">
-                <div className="flex items-start gap-3 mb-2">
-                  <span className="text-[#6B0000] dark:text-[#D4AF37] font-black text-2xl leading-none shrink-0 mt-1">
+              <div key={vIndex} className="border-l-4 border-blue-500 dark:border-blue-400 pl-3 py-1">
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-600 dark:text-blue-400 font-black text-xl leading-none shrink-0">
                     {number}
                   </span>
-                  <div className="flex-1 space-y-0.5">
-                    {restOfLine && <div className="leading-snug">{restOfLine}</div>}
+                  <div className="flex-1 space-y-0">
+                    {restOfLine && <div className="leading-tight">{restOfLine}</div>}
                     {lines.slice(1).map((line, lIndex) => (
-                      <div key={lIndex} className="leading-snug">{line}</div>
+                      <div key={lIndex} className="leading-tight">{line}</div>
                     ))}
                   </div>
                 </div>
@@ -68,9 +68,9 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
           
           // Verse without number
           return (
-            <div key={vIndex} className="bg-white/30 dark:bg-slate-800/30 rounded-2xl p-4 backdrop-blur-sm space-y-0.5">
+            <div key={vIndex} className="border-l-4 border-blue-500 dark:border-blue-400 pl-3 py-1 space-y-0">
               {lines.map((line, lIndex) => (
-                <div key={lIndex} className="leading-snug">{line}</div>
+                <div key={lIndex} className="leading-tight">{line}</div>
               ))}
             </div>
           );
@@ -186,7 +186,7 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
             <div className="mb-8 text-center">
               <h1 className="serif text-3xl font-black text-slate-900 dark:text-slate-100 mb-2 leading-tight">{selectedHymn.title}</h1>
               <div className="flex items-center justify-center gap-3">
-                <span className="text-xs font-black text-[#6B0000] dark:text-[#D4AF37] uppercase tracking-wider bg-[#6B0000]/10 dark:bg-[#D4AF37]/10 px-3 py-1 rounded-full">
+                <span className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800">
                   {selectedHymn.collection} {selectedHymn.number}
                 </span>
                 {selectedHymn.author && (
@@ -194,7 +194,7 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
                 )}
               </div>
             </div>
-            <div className={`serif ${fontSizeClass} text-slate-900 dark:text-slate-100 leading-[1.4] font-normal`}>
+            <div className={`serif ${fontSizeClass} text-slate-900 dark:text-slate-100 leading-[1.2] font-normal`}>
               {formatLyrics(selectedHymn.lyrics)}
             </div>
           </div>
@@ -212,8 +212,8 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
     <div className="flex flex-col h-full bg-[#FBF9F6] dark:bg-slate-900">
       <header className="px-5 pt-8 pb-0 bg-white dark:bg-slate-800 border-b border-[#E5E1DA] dark:border-slate-700 sticky top-0 z-20">
         <div className="flex items-center gap-2 mb-4">
-          <Music className="w-5 h-5 text-[#6B0000] dark:text-[#D4AF37]" />
-          <h1 className="serif text-2xl font-bold text-[#6B0000] dark:text-[#D4AF37]">Hymnal</h1>
+          <Music className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <h1 className="serif text-2xl font-bold text-blue-600 dark:text-blue-400">Hymnal</h1>
         </div>
         
         <div className="relative group mb-4">
@@ -232,13 +232,13 @@ export const HymnalTab: React.FC<HymnalTabProps> = ({ hymns, favorites, onToggle
             <button
               key={type}
               onClick={() => setActiveCollection(type)}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
+              className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide whitespace-nowrap transition-all border-2 ${
                 activeCollection === type 
-                ? 'bg-[#6B0000] dark:bg-[#D4AF37] text-white dark:text-slate-900 border-[#6B0000] dark:border-[#D4AF37] shadow-md shadow-[#6B0000]/20 dark:shadow-[#D4AF37]/20' 
-                : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                ? 'bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-lg' 
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-600'
               }`}
             >
-              {type === 'CANTICLE' ? 'Canticles' : type}
+              {type === 'ALL' ? 'All Hymns' : type === 'MHB' ? 'Methodist Hymn Book' : type === 'CAN' ? 'Canaan Hymns' : 'Canticles'}
             </button>
           ))}
         </div>
