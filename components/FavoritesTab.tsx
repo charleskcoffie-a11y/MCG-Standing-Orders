@@ -35,7 +35,7 @@ export const FavoritesTab: React.FC<FavoritesTabProps> = ({ favorites, sections,
     const verses = text.split(/\n\n+/);
     
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {verses.map((verse, vIndex) => {
           const lines = verse.trim().split('\n');
           const firstLine = lines[0];
@@ -51,10 +51,10 @@ export const FavoritesTab: React.FC<FavoritesTabProps> = ({ favorites, sections,
                   <span className="text-[#6B0000] dark:text-[#D4AF37] font-black text-2xl leading-none shrink-0 mt-1">
                     {number}
                   </span>
-                  <div className="flex-1 space-y-1">
-                    {restOfLine && <div className="leading-relaxed">{restOfLine}</div>}
+                  <div className="flex-1 space-y-0.5">
+                    {restOfLine && <div className="leading-snug">{restOfLine}</div>}
                     {lines.slice(1).map((line, lIndex) => (
-                      <div key={lIndex} className="leading-relaxed">{line}</div>
+                      <div key={lIndex} className="leading-snug">{line}</div>
                     ))}
                   </div>
                 </div>
@@ -64,9 +64,9 @@ export const FavoritesTab: React.FC<FavoritesTabProps> = ({ favorites, sections,
           
           // Verse without number
           return (
-            <div key={vIndex} className="bg-white/30 dark:bg-slate-800/30 rounded-2xl p-4 backdrop-blur-sm space-y-1">
+            <div key={vIndex} className="bg-white/30 dark:bg-slate-800/30 rounded-2xl p-4 backdrop-blur-sm space-y-0.5">
               {lines.map((line, lIndex) => (
-                <div key={lIndex} className="leading-relaxed">{line}</div>
+                <div key={lIndex} className="leading-snug">{line}</div>
               ))}
             </div>
           );
@@ -121,7 +121,7 @@ export const FavoritesTab: React.FC<FavoritesTabProps> = ({ favorites, sections,
                 )}
               </div>
             </div>
-            <div className={`serif ${fontSizeClass} text-slate-900 dark:text-slate-100 leading-[1.7] font-normal`}>
+            <div className={`serif ${fontSizeClass} text-slate-900 dark:text-slate-100 leading-[1.4] font-normal`}>
               {formatLyrics(selectedHymn.lyrics)}
             </div>
           </div>
