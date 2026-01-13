@@ -346,12 +346,11 @@ const App: React.FC = () => {
       id: 'guest-' + Date.now(),
       username: 'Guest User',
       email: 'guest@local',
-      fullName: 'Guest',
+      full_name: 'Guest',
       church: 'Local',
       role: 'user',
       status: 'approved',
-      createdAt: Date.now(),
-      passcode: ''
+      created_at: Date.now()
     };
     setCurrentUser(guestUser);
   }} />;
