@@ -338,7 +338,20 @@ const App: React.FC = () => {
   };
 
   if (!isInitialized) return null;
-  if (!currentUser) return <AuthView onAuthenticated={handleAuthenticated} />;
+  if (!currentUser) return <AuthView onAuthenticated={handleAuthenticated} onGuestLogin={() => {
+    const guestUser: Profile = {
+      id: 'guest-' + Date.now(),
+      username: 'Guest User',
+      email: 'guest@local',
+      fullName: 'Guest',
+      church: 'Local',
+      role: 'user',
+      status: 'approved',
+      createdAt: Date.now(),
+      passcode: ''
+    };
+    setCurrentUser(guestUser);
+  }} />;
   if (currentUser.status === 'pending' || currentUser.status === 'rejected') {
     return <PendingView user={currentUser} onStatusUpdate={() => setCurrentUser({...currentUser, status: 'approved'})} onSignOut={handleSignOut} />;
   }

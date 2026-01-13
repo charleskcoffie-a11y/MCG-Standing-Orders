@@ -5,9 +5,10 @@ import { Loader2, Mail, User, ShieldCheck, Landmark, Lock, AtSign } from 'lucide
 
 interface AuthViewProps {
   onAuthenticated: () => void;
+  onGuestLogin?: () => void;
 }
 
-export const AuthView: React.FC<AuthViewProps> = ({ onAuthenticated }) => {
+export const AuthView: React.FC<AuthViewProps> = ({ onAuthenticated, onGuestLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [identifier, setIdentifier] = useState(''); // Email or Username
   const [email, setEmail] = useState('');
@@ -138,6 +139,15 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthenticated }) => {
         >
           {isLogin ? "Need access? Request registration" : "Already have an account? Sign In"}
         </button>
+
+        {onGuestLogin && (
+          <button 
+            onClick={onGuestLogin}
+            className="w-full mt-3 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all"
+          >
+            Continue as Guest
+          </button>
+        )}
       </div>
 
       <div className="mt-12 text-center text-slate-400 text-[10px] uppercase tracking-widest font-bold">
